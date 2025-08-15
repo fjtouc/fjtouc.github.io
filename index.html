@@ -19,7 +19,7 @@
 
     /* 顶部时间 */
     #timeTogether {
-        font-size: 3rem; /* 放大 */
+        font-size: 3rem;
         font-weight: bold;
         color: #ff6fa1;
         margin-top: 30px;
@@ -28,7 +28,7 @@
 
     /* 中间花体问题 */
     #question {
-        font-size: 5rem; /* 放大 */
+        font-size: 5rem;
         font-family: 'Great Vibes', cursive;
         color: #ff4d6d;
         text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
@@ -39,8 +39,8 @@
 
     /* 按钮样式 */
     .btn {
-        padding: 18px 40px; /* 放大按钮 */
-        font-size: 2rem; /* 放大文字 */
+        padding: 18px 40px;
+        font-size: 2rem;
         border: none;
         border-radius: 12px;
         cursor: pointer;
@@ -58,7 +58,6 @@
         box-shadow: 0 0 20px rgba(255,255,255,0.3);
     }
 
-    /* 按钮区域 */
     #buttons {
         margin-bottom: auto;
     }
@@ -68,6 +67,33 @@
         top: 0;
         left: 0;
         pointer-events: none;
+    }
+
+    /* 手机适配 */
+    @media (max-width: 768px) {
+        #timeTogether {
+            font-size: 2.2rem; /* 放大时间文字 */
+        }
+        #question {
+            font-size: 3.8rem; /* 放大问题文字 */
+        }
+        .btn {
+            padding: 20px 50px; /* 按钮更大 */
+            font-size: 2.2rem;  /* 按钮文字更大 */
+        }
+    }
+
+    @media (max-width: 480px) {
+        #timeTogether {
+            font-size: 2.5rem;
+        }
+        #question {
+            font-size: 4.2rem;
+        }
+        .btn {
+            padding: 22px 55px;
+            font-size: 2.5rem;
+        }
     }
 </style>
 </head>
@@ -122,7 +148,7 @@
     yesBtn.addEventListener("click", () => {
         yesMusic.currentTime = 0;
         yesMusic.play();
-        for (let i = 0; i < 20; i++) { // 烟花更多更密
+        for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
             }, i * 200);
@@ -142,13 +168,13 @@
     resizeCanvas();
 
     function createFirework(x, y) {
-        for (let i = 0; i < 180; i++) { // 粒子更多
+        for (let i = 0; i < 180; i++) {
             particles.push({
                 x: x,
                 y: y,
                 speedX: (Math.random() - 0.5) * 12,
                 speedY: (Math.random() - 0.5) * 12,
-                radius: Math.random() * 4 + 2, // 粒子更大
+                radius: Math.random() * 4 + 2,
                 alpha: 1,
                 color: `hsl(${Math.random() * 360}, 100%, 60%)`
             });
