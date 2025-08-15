@@ -4,194 +4,193 @@
 <meta charset="UTF-8">
 <title>七夕快乐 ❤️</title>
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-        height: 100vh;
-        background: url('bg.jpg') no-repeat center center/cover;
-        font-family: '微软雅黑', sans-serif;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    height: 100vh;
+    background: url('bg.jpg') no-repeat center center/cover;
+    font-family: '微软雅黑', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
-    /* 顶部时间显示 */
-    #timeTogether {
-        font-size: 4rem; /* 比问题文字大一点 */
-        font-weight: bold;
-        color: #ff6fa1;
-        text-align: center;
-        margin-top: 5vh; /* 顶部偏下 */
-    }
+/* 顶部时间显示 */
+#timeTogether {
+    font-size: 4rem; /* 比问题文字大一点 */
+    font-weight: bold;
+    color: #ff6fa1;
+    text-align: center;
+    margin-top: 5vh; /* 顶部偏下 */
+}
 
-    /* 中间内容容器 */
-    .middle {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start; /* 顶部对齐，偏下一点 */
-        flex: 1; /* 占满剩余高度 */
-        padding-top: 15vh; /* 调整偏下距离，可微调 */
-    }
+/* 中间内容容器 */
+.middle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* 顶部对齐 */
+    flex: 1;
+    padding-top: 20vh; /* 问题文字略偏下 */
+}
 
-    #question {
-        font-size: 5rem;
-        font-family: '微软雅黑', sans-serif;
-        color: #ff4d6d;
-        text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
-        text-align: center;
-        margin-bottom: 5vh;
-    }
+#question {
+    font-size: 5rem;
+    font-family: '微软雅黑', sans-serif;
+    color: #ff4d6d;
+    text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
+    text-align: center;
+    margin-bottom: 5vh;
+}
 
-    #buttons {
-        text-align: center;
-    }
+#buttons {
+    text-align: center;
+}
 
-    .btn {
-        padding: 18px 40px;
-        font-size: 2rem;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        margin: 15px;
-        transition: all 0.3s ease;
-    }
+.btn {
+    padding: 18px 40px;
+    font-size: 2rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin: 15px;
+    transition: all 0.3s ease;
+}
 
-    #yes {
-        background-color: #ff4d6d;
-        color: white;
-        box-shadow: 0 0 20px rgba(255,77,109,0.9);
-    }
+#yes {
+    background-color: #ff4d6d;
+    color: white;
+    box-shadow: 0 0 20px rgba(255,77,109,0.9);
+}
 
-    #no {
-        background-color: #666;
-        color: white;
-        box-shadow: 0 0 20px rgba(255,255,255,0.3);
-    }
+#no {
+    background-color: #666;
+    color: white;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
 
-    canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-    }
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
 
-    /* 手机适配 */
-    @media (max-width: 768px) {
-        #timeTogether { font-size: 3rem; margin-top: 4vh; }
-        #question { font-size: 4rem; margin-bottom: 4vh; }
-        .btn { padding: 20px 50px; font-size: 2.2rem; }
-    }
+/* 手机适配 */
+@media (max-width: 768px) {
+    #timeTogether { font-size: 3rem; margin-top: 4vh; }
+    #question { font-size: 4rem; margin-bottom: 4vh; }
+    .btn { padding: 20px 50px; font-size: 2.2rem; }
+}
 
-    @media (max-width: 480px) {
-        #timeTogether { font-size: 2.8rem; margin-top: 3vh; }
-        #question { font-size: 3.5rem; margin-bottom: 3vh; }
-        .btn { padding: 22px 55px; font-size: 2.5rem; }
-    }
+@media (max-width: 480px) {
+    #timeTogether { font-size: 2.8rem; margin-top: 3vh; }
+    #question { font-size: 3.5rem; margin-bottom: 3vh; }
+    .btn { padding: 22px 55px; font-size: 2.5rem; }
+}
 </style>
 </head>
 <body>
-    <audio id="bgm" autoplay loop>
-        <source src="data/zshyn.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="yesMusic">
-        <source src="data/yyzyq.mp3" type="audio/mpeg">
-    </audio>
+<audio id="bgm" autoplay loop>
+    <source src="data/zshyn.mp3" type="audio/mpeg">
+</audio>
+<audio id="yesMusic">
+    <source src="data/yyzyq.mp3" type="audio/mpeg">
+</audio>
 
-    <h1 id="timeTogether"></h1>
+<h1 id="timeTogether"></h1>
 
-    <div class="middle">
-        <h2 id="question">你愿意和我永远在一起吗？</h2>
-        <div id="buttons">
-            <button id="yes" class="btn">愿意 ❤️</button>
-            <button id="no" class="btn">不要 😢</button>
-        </div>
+<div class="middle">
+    <h2 id="question">你愿意和我永远在一起吗？</h2>
+    <div id="buttons">
+        <button id="yes" class="btn">愿意 ❤️</button>
+        <button id="no" class="btn">不要 😢</button>
     </div>
+</div>
 
-    <canvas id="fireworks"></canvas>
+<canvas id="fireworks"></canvas>
 
 <script>
-    // 计算在一起时间
-    const startDate = new Date("2024-06-28T00:00:00");
-    const timeEl = document.getElementById("timeTogether");
+// 计算在一起时间
+const startDate = new Date("2024-06-28T00:00:00");
+const timeEl = document.getElementById("timeTogether");
 
-    function updateTime() {
-        const now = new Date();
-        const diff = now - startDate;
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((diff / (1000 * 60)) % 60);
-        const seconds = Math.floor((diff / 1000) % 60);
-        timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
+function updateTime() {
+    const now = new Date();
+    const diff = now - startDate;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// 按钮交互
+const yesBtn = document.getElementById("yes");
+const noBtn = document.getElementById("no");
+const yesMusic = document.getElementById("yesMusic");
+
+noBtn.addEventListener("click", () => {
+    let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
+    let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
+    yesBtn.style.fontSize = (yesSize * 1.2) + "px";
+    noBtn.style.fontSize = (noSize * 0.8) + "px";
+});
+
+yesBtn.addEventListener("click", () => {
+    yesMusic.currentTime = 0;
+    yesMusic.play();
+    for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+            createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
+        }, i * 200);
     }
-    setInterval(updateTime, 1000);
-    updateTime();
+});
 
-    // 按钮交互
-    const yesBtn = document.getElementById("yes");
-    const noBtn = document.getElementById("no");
-    const yesMusic = document.getElementById("yesMusic");
+// 烟花效果
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+let particles = [];
 
-    noBtn.addEventListener("click", () => {
-        let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-        let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-        yesBtn.style.fontSize = (yesSize * 1.2) + "px";
-        noBtn.style.fontSize = (noSize * 0.8) + "px";
-    });
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-    yesBtn.addEventListener("click", () => {
-        yesMusic.currentTime = 0;
-        yesMusic.play();
-        for (let i = 0; i < 20; i++) {
-            setTimeout(() => {
-                createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
-            }, i * 200);
-        }
-    });
-
-    // 烟花效果
-    const canvas = document.getElementById("fireworks");
-    const ctx = canvas.getContext("2d");
-    let particles = [];
-
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    function createFirework(x, y) {
-        for (let i = 0; i < 180; i++) {
-            particles.push({
-                x: x,
-                y: y,
-                speedX: (Math.random() - 0.5) * 12,
-                speedY: (Math.random() - 0.5) * 12,
-                radius: Math.random() * 4 + 2,
-                alpha: 1,
-                color: `hsl(${Math.random() * 360}, 100%, 60%)`
-            });
-        }
-    }
-
-    function drawFireworks() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach((p, i) => {
-            ctx.globalAlpha = p.alpha;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
-            p.x += p.speedX;
-            p.y += p.speedY;
-            p.alpha -= 0.015;
-            if (p.alpha <= 0) particles.splice(i, 1);
+function createFirework(x, y) {
+    for (let i = 0; i < 180; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            speedX: (Math.random() - 0.5) * 12,
+            speedY: (Math.random() - 0.5) * 12,
+            radius: Math.random() * 4 + 2,
+            alpha: 1,
+            color: `hsl(${Math.random() * 360}, 100%, 60%)`
         });
-        requestAnimationFrame(drawFireworks);
     }
+}
 
-    drawFireworks();
+function drawFireworks() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.alpha -= 0.015;
+        if (p.alpha <= 0) particles.splice(i, 1);
+    });
+    requestAnimationFrame(drawFireworks);
+}
+drawFireworks();
 </script>
 </body>
 </html>
