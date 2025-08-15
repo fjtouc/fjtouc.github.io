@@ -15,22 +15,22 @@
         align-items: center;
     }
 
-    .container {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        height: 100%;
-        width: 100%;
-        padding-top: 10vh; /* 默认顶部间距 */
-    }
-
+    /* 顶部时间显示 */
     #timeTogether {
         font-size: 3rem;
         font-weight: bold;
         color: #ff6fa1;
         text-align: center;
-        margin-bottom: 8vh; /* 时间和问题间距 */
+        margin-top: 2vh; /* 顶部距离 */
+    }
+
+    /* 中间内容容器 */
+    .middle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center; /* 垂直居中 */
+        flex: 1; /* 占满剩余高度 */
     }
 
     #question {
@@ -39,7 +39,7 @@
         color: #ff4d6d;
         text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
         text-align: center;
-        margin-bottom: 5vh; /* 问题与按钮间距 */
+        margin-bottom: 5vh;
     }
 
     #buttons {
@@ -77,15 +77,13 @@
 
     /* 手机适配 */
     @media (max-width: 768px) {
-        .container { padding-top: 5vh; }
-        #timeTogether { font-size: 2.4rem; margin-bottom: 6vh; }
+        #timeTogether { font-size: 2.4rem; }
         #question { font-size: 3.8rem; margin-bottom: 4vh; }
         .btn { padding: 20px 50px; font-size: 2.2rem; }
     }
 
     @media (max-width: 480px) {
-        .container { padding-top: 3vh; }
-        #timeTogether { font-size: 2.6rem; margin-bottom: 5vh; }
+        #timeTogether { font-size: 2.6rem; }
         #question { font-size: 4.2rem; margin-bottom: 3vh; }
         .btn { padding: 22px 55px; font-size: 2.5rem; }
     }
@@ -99,8 +97,9 @@
         <source src="data/yyzyq.mp3" type="audio/mpeg">
     </audio>
 
-    <div class="container">
-        <h1 id="timeTogether"></h1>
+    <h1 id="timeTogether"></h1>
+
+    <div class="middle">
         <h2 id="question">你愿意和我永远在一起吗？</h2>
         <div id="buttons">
             <button id="yes" class="btn">愿意 ❤️</button>
