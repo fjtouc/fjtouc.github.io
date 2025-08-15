@@ -1,19 +1,212 @@
-#timeTogether {
-    font-size: 3rem;
-    font-weight: bold;
-    color: #ff6fa1;
-    margin-top: 80px; /* 原来是30px，这里加大 */
-    text-align: center;
-}
-@media (max-width: 768px) {
-    #timeTogether {
-        font-size: 2.2rem;
-        margin-top: 60px; /* 手机端稍微小一点的间距 */
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>七夕快乐 ❤️</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        height: 100vh;
+        background: url('bg.jpg') no-repeat center center/cover;
+        font-family: '微软雅黑', sans-serif;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-}
-@media (max-width: 480px) {
-    #timeTogether {
-        font-size: 2.5rem;
-        margin-top: 50px; /* 超小屏再收窄一点 */
+
+    /* 统一容器布局 */
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        width: 100%;
     }
-}
+
+    /* 顶部时间 */
+    #timeTogether {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ff6fa1;
+        margin-top: 20vh; /* 在上方约1/4高度 */
+        text-align: center;
+    }
+
+    /* 中间花体问题 */
+    #question {
+        font-size: 5rem;
+        font-family: 'Great Vibes', cursive;
+        color: #ff4d6d;
+        text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
+        text-align: center;
+    }
+
+    /* 按钮区域 */
+    #buttons {
+        text-align: center;
+        margin-bottom: 10vh;
+    }
+    .btn {
+        padding: 18px 40px;
+        font-size: 2rem;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        margin: 15px;
+        transition: all 0.3s ease;
+    }
+    #yes {
+        background-color: #ff4d6d;
+        color: white;
+        box-shadow: 0 0 20px rgba(255,77,109,0.9);
+    }
+    #no {
+        background-color: #666;
+        color: white;
+        box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+
+    canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+
+    /* 手机适配 */
+    @media (max-width: 768px) {
+        #timeTogether {
+            font-size: 2.4rem;
+            margin-top: 18vh;
+        }
+        #question {
+            font-size: 3.8rem;
+        }
+        .btn {
+            padding: 20px 50px;
+            font-size: 2.2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #timeTogether {
+            font-size: 2.6rem;
+            margin-top: 16vh;
+        }
+        #question {
+            font-size: 4.2rem;
+        }
+        .btn {
+            padding: 22px 55px;
+            font-size: 2.5rem;
+        }
+    }
+</style>
+</head>
+<body>
+    <audio id="bgm" autoplay loop>
+        <source src="zshyn.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="yesMusic">
+        <source src="yyzyq.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="container">
+        <h1 id="timeTogether"></h1>
+        <h2 id="question">你愿意和我永远在一起吗？</h2>
+        <div id="buttons">
+            <button id="yes" class="btn">愿意 ❤️</button>
+            <button id="no" class="btn">不要 😢</button>
+        </div>
+    </div>
+
+    <canvas id="fireworks"></canvas>
+
+<script>
+    // 计算时间
+    const startDate = new Date("2024-06-28T00:00:00");
+    const timeEl = document.getElementById("timeTogether");
+
+    function updateTime() {
+        const now = new Date();
+        const diff = now - startDate;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 按钮交互
+    const yesBtn = document.getElementById("yes");
+    const noBtn = document.getElementById("no");
+    const yesMusic = document.getElementById("yesMusic");
+
+    noBtn.addEventListener("click", () => {
+        let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
+        let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
+        yesBtn.style.fontSize = (yesSize * 1.2) + "px";
+        noBtn.style.fontSize = (noSize * 0.8) + "px";
+    });
+
+    yesBtn.addEventListener("click", () => {
+        yesMusic.currentTime = 0;
+        yesMusic.play();
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
+            }, i * 200);
+        }
+    });
+
+    // 炫酷烟花
+    const canvas = document.getElementById("fireworks");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function createFirework(x, y) {
+        for (let i = 0; i < 180; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                speedX: (Math.random() - 0.5) * 12,
+                speedY: (Math.random() - 0.5) * 12,
+                radius: Math.random() * 4 + 2,
+                alpha: 1,
+                color: `hsl(${Math.random() * 360}, 100%, 60%)`
+            });
+        }
+    }
+
+    function drawFireworks() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.alpha -= 0.015;
+            if (p.alpha <= 0) particles.splice(i, 1);
+        });
+        requestAnimationFrame(drawFireworks);
+    }
+
+    drawFireworks();
+</script>
+</body>
+</html>
