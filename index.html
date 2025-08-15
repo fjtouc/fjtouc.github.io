@@ -17,11 +17,11 @@
 
     /* 顶部时间显示 */
     #timeTogether {
-        font-size: 3rem;
+        font-size: 4rem; /* 比问题文字大一点 */
         font-weight: bold;
         color: #ff6fa1;
         text-align: center;
-        margin-top: 2vh; /* 顶部距离 */
+        margin-top: 5vh; /* 顶部偏下 */
     }
 
     /* 中间内容容器 */
@@ -29,8 +29,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center; /* 垂直居中 */
+        justify-content: flex-start; /* 顶部对齐，偏下一点 */
         flex: 1; /* 占满剩余高度 */
+        padding-top: 15vh; /* 调整偏下距离，可微调 */
     }
 
     #question {
@@ -77,14 +78,14 @@
 
     /* 手机适配 */
     @media (max-width: 768px) {
-        #timeTogether { font-size: 2.4rem; }
-        #question { font-size: 3.8rem; margin-bottom: 4vh; }
+        #timeTogether { font-size: 3rem; margin-top: 4vh; }
+        #question { font-size: 4rem; margin-bottom: 4vh; }
         .btn { padding: 20px 50px; font-size: 2.2rem; }
     }
 
     @media (max-width: 480px) {
-        #timeTogether { font-size: 2.6rem; }
-        #question { font-size: 4.2rem; margin-bottom: 3vh; }
+        #timeTogether { font-size: 2.8rem; margin-top: 3vh; }
+        #question { font-size: 3.5rem; margin-bottom: 3vh; }
         .btn { padding: 22px 55px; font-size: 2.5rem; }
     }
 </style>
