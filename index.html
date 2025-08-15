@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>七夕快乐 ❤️</title>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         height: 100vh;
@@ -17,38 +15,37 @@
         align-items: center;
     }
 
-    /* 统一容器布局 */
     .container {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
+        align-items: center;
         height: 100%;
         width: 100%;
+        padding-top: 15vh; /* 顶部间距 */
     }
 
-    /* 顶部时间 */
     #timeTogether {
         font-size: 3rem;
         font-weight: bold;
         color: #ff6fa1;
-        margin-top: 20vh; /* 在上方约1/4高度 */
         text-align: center;
+        margin-bottom: 8vh; /* 时间和问题间距 */
     }
 
-    /* 中间花体问题 */
     #question {
         font-size: 5rem;
-        font-family: 'Great Vibes', cursive;
+        font-family: '微软雅黑', sans-serif;
         color: #ff4d6d;
         text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
         text-align: center;
+        margin-bottom: 5vh; /* 问题与按钮间距 */
     }
 
-    /* 按钮区域 */
     #buttons {
         text-align: center;
-        margin-bottom: 10vh;
     }
+
     .btn {
         padding: 18px 40px;
         font-size: 2rem;
@@ -58,11 +55,13 @@
         margin: 15px;
         transition: all 0.3s ease;
     }
+
     #yes {
         background-color: #ff4d6d;
         color: white;
         box-shadow: 0 0 20px rgba(255,77,109,0.9);
     }
+
     #no {
         background-color: #666;
         color: white;
@@ -78,31 +77,15 @@
 
     /* 手机适配 */
     @media (max-width: 768px) {
-        #timeTogether {
-            font-size: 2.4rem;
-            margin-top: 18vh;
-        }
-        #question {
-            font-size: 3.8rem;
-        }
-        .btn {
-            padding: 20px 50px;
-            font-size: 2.2rem;
-        }
+        #timeTogether { font-size: 2.4rem; margin-bottom: 6vh; }
+        #question { font-size: 3.8rem; margin-bottom: 4vh; }
+        .btn { padding: 20px 50px; font-size: 2.2rem; }
     }
 
     @media (max-width: 480px) {
-        #timeTogether {
-            font-size: 2.6rem;
-            margin-top: 16vh;
-        }
-        #question {
-            font-size: 4.2rem;
-        }
-        .btn {
-            padding: 22px 55px;
-            font-size: 2.5rem;
-        }
+        #timeTogether { font-size: 2.6rem; margin-bottom: 5vh; }
+        #question { font-size: 4.2rem; margin-bottom: 3vh; }
+        .btn { padding: 22px 55px; font-size: 2.5rem; }
     }
 </style>
 </head>
