@@ -19,43 +19,43 @@
 
     /* 顶部时间 */
     #timeTogether {
-        font-size: 1.8rem;
+        font-size: 3rem; /* 放大 */
         font-weight: bold;
         color: #ff6fa1;
-        margin-top: 20px;
+        margin-top: 30px;
         text-align: center;
     }
 
     /* 中间花体问题 */
     #question {
-        font-size: 3rem;
+        font-size: 5rem; /* 放大 */
         font-family: 'Great Vibes', cursive;
         color: #ff4d6d;
-        text-shadow: 0 0 12px rgba(255, 77, 109, 0.6);
+        text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
         margin-top: auto;
-        margin-bottom: 40px;
+        margin-bottom: 50px;
         text-align: center;
     }
 
     /* 按钮样式 */
     .btn {
-        padding: 12px 28px;
-        font-size: 1.3rem;
+        padding: 18px 40px; /* 放大按钮 */
+        font-size: 2rem; /* 放大文字 */
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         cursor: pointer;
-        margin: 10px;
+        margin: 15px;
         transition: all 0.3s ease;
     }
     #yes {
         background-color: #ff4d6d;
         color: white;
-        box-shadow: 0 0 15px rgba(255,77,109,0.8);
+        box-shadow: 0 0 20px rgba(255,77,109,0.9);
     }
     #no {
         background-color: #666;
         color: white;
-        box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        box-shadow: 0 0 20px rgba(255,255,255,0.3);
     }
 
     /* 按钮区域 */
@@ -122,10 +122,10 @@
     yesBtn.addEventListener("click", () => {
         yesMusic.currentTime = 0;
         yesMusic.play();
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 20; i++) { // 烟花更多更密
             setTimeout(() => {
                 createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
-            }, i * 300);
+            }, i * 200);
         }
     });
 
@@ -142,13 +142,13 @@
     resizeCanvas();
 
     function createFirework(x, y) {
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 180; i++) { // 粒子更多
             particles.push({
                 x: x,
                 y: y,
-                speedX: (Math.random() - 0.5) * 10,
-                speedY: (Math.random() - 0.5) * 10,
-                radius: Math.random() * 3 + 1,
+                speedX: (Math.random() - 0.5) * 12,
+                speedY: (Math.random() - 0.5) * 12,
+                radius: Math.random() * 4 + 2, // 粒子更大
                 alpha: 1,
                 color: `hsl(${Math.random() * 360}, 100%, 60%)`
             });
