@@ -107,7 +107,12 @@ canvas#fireworks {
   z-index: 10;
 }
 
-/* 手机适配 */
+/* 运动减少偏好 */
+@media (prefers-reduced-motion: reduce) {
+  #fireworks { display: none; }
+}
+
+/* 响应式 */
 @media (max-width: 1024px) {
   #timeTogether { font-size: 3.2rem; margin-top: 6vh; }
   #question { font-size: 4.2rem; }
@@ -122,15 +127,10 @@ canvas#fireworks {
   #question { font-size: 2.6rem; margin-bottom: 2.4vh; }
   .btn { padding: 16px 26px; font-size: 1.5rem; }
 }
-
-/* 运动减少偏好 */
-@media (prefers-reduced-motion: reduce) {
-  #fireworks { display: none; }
-}
 </style>
 </head>
 <body>
-<!-- 音频文件均在与 index.html 同级 -->
+<!-- 音频与 index.html 同级 -->
 <audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
 <audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
@@ -147,9 +147,7 @@ canvas#fireworks {
 <canvas id="fireworks"></canvas>
 
 <script>
-/* =========================
-   在一起时间显示
-   ========================= */
+// 在一起时间
 const startDate = new Date("2024-06-28T00:00:00");
 const timeEl = document.getElementById("timeTogether");
 function updateTime() {
@@ -164,23 +162,45 @@ function updateTime() {
 setInterval(updateTime, 1000);
 updateTime();
 
-/* =========================
-   按钮交互与音频控制
-   ========================= */
+// 按钮 & 音频
 const yesBtn = document.getElementById("yes");
 const noBtn = document.getElementById("no");
 const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
 
-// 默认音量
 bgm.volume = 0.6;
 yesMusic.volume = 1.0;
 
-// 页面载入即尝试播放背景音乐（如被浏览器策略阻止，将静音直至用户有任何交互）
-document.addEventListener('DOMContentLoaded', () => {
-  bgm.play().catch(()=>{});
-});
+// 尽最大努力自动播放（不显示任何提示）
+async function tryAutoPlay() {
+  try {
+    bgm.muted = false;
+    await bgm.play();
+    return;
+  } catch (e1) {
+    // 尝试“静音自动播放后再解除静音”（部分浏览器有效）
+    try {
+      bgm.muted = true;
+      await bgm.play();
+      setTimeout(() => { bgm.muted = false; bgm.volume = 0.6; }, 300);
+    } catch (e2) {
+      // 最后兜底：等待任意一次用户交互后静默播放（无提示）
+      const unlock = async () => {
+        try { await bgm.play(); } catch(_) {}
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('touchstart', unlock);
+        window.removeEventListener('click', unlock);
+      };
+      window.addEventListener('pointerdown', unlock, { once: true });
+      window.addEventListener('touchstart', unlock, { once: true });
+      window.addEventListener('click', unlock, { once: true });
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', tryAutoPlay);
+window.addEventListener('load', tryAutoPlay);
 
+// “不要”缩小，“愿意”放大
 noBtn.addEventListener("click", () => {
   let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
   let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
@@ -188,32 +208,30 @@ noBtn.addEventListener("click", () => {
   noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
 });
 
-// 简单音量淡入淡出
+// 点击“愿意”：播放短音+礼花
 function fadeVolume(audio, target, duration = 300) {
   const start = audio.volume;
-  const change = target - start;
+  const delta = target - start;
   const t0 = performance.now();
   const step = (now) => {
     const t = Math.min(1, (now - t0) / duration);
-    audio.volume = Math.max(0, Math.min(1, start + change * t));
+    audio.volume = Math.max(0, Math.min(1, start + delta * t));
     if (t < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
 }
 
 yesBtn.addEventListener("click", () => {
-  // “愿意”短音乐播放，压低BGM再恢复
+  tryAutoPlay(); // 再尝试一次，确保BGM已起
   fadeVolume(bgm, 0.25, 200);
   yesMusic.currentTime = 0;
   yesMusic.play().catch(()=>{});
   yesMusic.onended = () => fadeVolume(bgm, 0.6, 400);
-
-  // 仅在点击“愿意”时触发烟花
-  celebratoryHearts();
+  celebratoryHearts(); // 触发礼花
 });
 
 /* =========================
-   拟物烟花引擎（高颜值，无黑烟）
+   高拟真烟花（仅“愿意”后触发，无黑烟）
    ========================= */
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d", { alpha: true });
@@ -230,20 +248,19 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// 工具
 const rand = (min, max) => Math.random() * (max - min) + min;
 const TAU = Math.PI * 2;
-function hsla(h, s, l, a) { return `hsla(${h}, ${s}%, ${l}%, ${a})`; }
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-function mix(a, b, t) { return a + (b - a) * t; }
+const hsla = (h, s, l, a) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const mix = (a, b, t) => a + (b - a) * t;
 
 const palettes = [
-  { name: 'gold', hues: [46, 50, 54], s: [88, 100], l: [55, 70], glitter: [55, 70] },
-  { name: 'rose', hues: [330, 345, 355], s: [85, 100], l: [55, 70], glitter: [65, 80] },
-  { name: 'peach', hues: [12, 18, 24], s: [85, 100], l: [55, 72], glitter: [65, 78] },
-  { name: 'aqua', hues: [180, 190, 200], s: [70, 95], l: [55, 72], glitter: [60, 75] },
-  { name: 'violet', hues: [255, 270, 285], s: [70, 95], l: [55, 72], glitter: [60, 75] },
-  { name: 'emerald', hues: [135, 145, 155], s: [70, 95], l: [50, 68], glitter: [60, 76] },
+  { hues: [46, 50, 54], s: [88, 100], l: [55, 70], glitter: [55, 70] },
+  { hues: [330, 345, 355], s: [85, 100], l: [55, 70], glitter: [65, 80] },
+  { hues: [12, 18, 24], s: [85, 100], l: [55, 72], glitter: [65, 78] },
+  { hues: [180, 190, 200], s: [70, 95], l: [55, 72], glitter: [60, 75] },
+  { hues: [255, 270, 285], s: [70, 95], l: [55, 72], glitter: [60, 75] },
+  { hues: [135, 145, 155], s: [70, 95], l: [50, 68], glitter: [60, 76] },
 ];
 function pickPalette() {
   const p = palettes[Math.floor(Math.random() * palettes.length)];
@@ -253,56 +270,34 @@ function pickPalette() {
   return { hue, sat, lig, glitter: Math.floor(rand(p.glitter[0], p.glitter[1])) };
 }
 
-// 物理参数
-const Physics = {
-  gravity: 240,          // 重力 px/s^2
-  airDrag: 0.992,        // 空气阻尼（粒子）
-  rocketDrag: 0.998,     // 空气阻尼（火箭），更高空
-  windStrength: 4,       // 微风强度
-};
+const Physics = { gravity: 240, airDrag: 0.992, rocketDrag: 0.998, windStrength: 4 };
 
-// 容器
-const particles = [];
-const rockets = [];
-const shockwaves = [];
-
-// 粒子
+const particles = [], rockets = [], shockwaves = [];
 class Particle {
-  constructor(opts) {
-    this.x = opts.x; this.y = opts.y;
-    this.vx = opts.vx; this.vy = opts.vy;
-    this.size = opts.size || rand(1.2, 2.4);
-    this.ttl = opts.ttl || rand(0.9, 1.9);
-    this.life = 0;
-    this.color = opts.color || pickPalette();
-    this.alpha = 1;
-    this.glitter = opts.glitter ?? Math.random() < 0.45;
-    this.twinkle = Math.random() < 0.35;
-    this.type = opts.type || 'spark';
-    this.heavy = !!opts.heavy; // 柳式拖尾
-    this.trail = [];
-    this.maxTrail = this.heavy ? 10 : 6;
-    this.bokeh = Math.random() < 0.12;
+  constructor(o) {
+    Object.assign(this, {
+      x: o.x, y: o.y, vx: o.vx, vy: o.vy,
+      size: o.size ?? rand(1.2, 2.4),
+      ttl: o.ttl ?? rand(0.9, 1.9),
+      life: 0,
+      color: o.color ?? pickPalette(),
+      alpha: 1,
+      glitter: o.glitter ?? Math.random() < 0.45,
+      twinkle: Math.random() < 0.35,
+      heavy: !!o.heavy,
+      trail: [],
+      maxTrail: o.heavy ? 10 : 6,
+      bokeh: Math.random() < 0.12
+    });
   }
   update(dt, windT) {
-    // 轨迹
     this.trail.push([this.x, this.y]);
     if (this.trail.length > this.maxTrail) this.trail.shift();
-
-    // 力
     const wind = Math.sin(windT + this.y * 0.002) * (this.heavy ? Physics.windStrength * 0.2 : Physics.windStrength);
     this.vx += wind * dt;
     this.vy += Physics.gravity * dt * (this.heavy ? 1.1 : 1);
-
-    // 阻尼
-    this.vx *= Physics.airDrag;
-    this.vy *= Physics.airDrag;
-
-    // 移动
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-
-    // 生命周期
+    this.vx *= Physics.airDrag; this.vy *= Physics.airDrag;
+    this.x += this.vx * dt; this.y += this.vy * dt;
     this.life += dt;
     this.alpha = 1 - (this.life / this.ttl);
     if (this.twinkle) {
@@ -315,22 +310,14 @@ class Particle {
     const { hue, sat, lig } = this.color;
     const core = hsla(hue, sat, lig + 10, clamp(this.alpha, 0, 1));
     const glow = hsla(hue, sat, 60, clamp(this.alpha * 0.3, 0, 0.6));
-
-    // 拖尾
     if (this.trail.length > 1) {
       ctx.lineWidth = this.heavy ? 2 : 1.25;
       ctx.strokeStyle = glow;
       ctx.beginPath();
-      const [sx, sy] = this.trail[0];
-      ctx.moveTo(sx, sy);
-      for (let i = 1; i < this.trail.length; i++) {
-        const [tx, ty] = this.trail[i];
-        ctx.lineTo(tx, ty);
-      }
+      ctx.moveTo(this.trail[0][0], this.trail[0][1]);
+      for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
       ctx.stroke();
     }
-
-    // 主体
     ctx.beginPath();
     ctx.fillStyle = core;
     ctx.shadowBlur = 18;
@@ -338,8 +325,6 @@ class Particle {
     ctx.arc(this.x, this.y, this.bokeh ? this.size * 1.8 : this.size, 0, TAU);
     ctx.fill();
     ctx.shadowBlur = 0;
-
-    // 闪亮碎钻
     if (this.glitter && Math.random() < 0.6) {
       ctx.globalAlpha = clamp(this.alpha * 0.8, 0, 1);
       ctx.fillStyle = hsla(hue, 100, 90, 0.9);
@@ -348,277 +333,156 @@ class Particle {
     }
   }
 }
-
-// 冲击波
 class Shockwave {
-  constructor(x, y, color) {
-    this.x = x; this.y = y;
-    this.r = 0;
-    this.ttl = rand(0.35, 0.6);
-    this.life = 0;
-    this.color = color;
-  }
-  update(dt) {
-    this.life += dt;
-    this.r += 200 * dt;
-    return this.life < this.ttl;
-  }
+  constructor(x, y, color) { this.x = x; this.y = y; this.r = 0; this.ttl = rand(0.35, 0.6); this.life = 0; this.color = color; }
+  update(dt) { this.life += dt; this.r += 200 * dt; return this.life < this.ttl; }
   draw(ctx) {
     const t = 1 - (this.life / this.ttl);
     ctx.lineWidth = mix(3.5, 0.3, 1 - t);
     ctx.strokeStyle = hsla(this.color.hue, this.color.sat, mix(72, 58, 1 - t), Math.max(0, Math.min(0.8, t * 0.8)));
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, TAU);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.stroke();
   }
 }
-
-// 火箭
 class Rocket {
-  constructor(x, y, vx, vy, palette, forceType) {
-    this.x = x; this.y = y;
-    this.vx = vx; this.vy = vy;
-    this.ttl = rand(1.0, 1.9);
-    this.life = 0;
-    this.palette = palette || pickPalette();
-    this.forceType = forceType || null;
-    this.trail = [];
+  constructor(x, y, vx, vy, pal, forceType) {
+    Object.assign(this, { x, y, vx, vy, ttl: rand(1.0, 1.9), life: 0, palette: pal || pickPalette(), forceType: forceType || null, trail: [] });
   }
   update(dt, windT) {
-    // 轨迹
-    this.trail.push([this.x, this.y]);
-    if (this.trail.length > 14) this.trail.shift();
-
-    // 风与重力
+    this.trail.push([this.x, this.y]); if (this.trail.length > 14) this.trail.shift();
     const wind = Math.sin(windT + this.y * 0.0015) * (Physics.windStrength * 0.5);
-    this.vx += wind * dt;
-    this.vy += Physics.gravity * 0.85 * dt;
-
-    // 阻尼
-    this.vx *= Physics.rocketDrag;
-    this.vy *= Physics.rocketDrag;
-
-    // 移动
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.life += dt;
-
-    // 爆炸条件：尽量升到屏幕顶部 10% 区域
+    this.vx += wind * dt; this.vy += Physics.gravity * 0.85 * dt;
+    this.vx *= Physics.rocketDrag; this.vy *= Physics.rocketDrag;
+    this.x += this.vx * dt; this.y += this.vy * dt; this.life += dt;
     const explodeTop = this.y < innerHeight * 0.10;
-    const explodeApex = this.vy > 20; // 开始明显下落
+    const explodeApex = this.vy > 20;
     const explodeTimeout = this.life > this.ttl + 0.3;
-    const explode = explodeTop || explodeApex || explodeTimeout;
-    return !explode;
+    return !(explodeTop || explodeApex || explodeTimeout);
   }
   draw(ctx) {
-    // 彗星头
     const head = hsla(this.palette.hue, this.palette.sat, 70, 1);
     const glow = hsla(this.palette.hue, this.palette.sat, 60, 0.5);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.beginPath();
-    ctx.shadowBlur = 24;
-    ctx.shadowColor = glow;
-    ctx.fillStyle = head;
-    ctx.arc(this.x, this.y, 2.4, 0, TAU);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // 彗尾
+    ctx.beginPath(); ctx.shadowBlur = 24; ctx.shadowColor = glow; ctx.fillStyle = head;
+    ctx.arc(this.x, this.y, 2.4, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
     if (this.trail.length > 1) {
       ctx.lineWidth = 2.2;
-      const grad = ctx.createLinearGradient(this.trail[0][0], this.trail[0][1], this.x, this.y);
-      grad.addColorStop(0, hsla(this.palette.hue, this.palette.sat, 60, 0));
-      grad.addColorStop(1, hsla(this.palette.hue, this.palette.sat, 70, 0.9));
-      ctx.strokeStyle = grad;
-      ctx.beginPath();
+      const g = ctx.createLinearGradient(this.trail[0][0], this.trail[0][1], this.x, this.y);
+      g.addColorStop(0, hsla(this.palette.hue, this.palette.sat, 60, 0));
+      g.addColorStop(1, hsla(this.palette.hue, this.palette.sat, 70, 0.9));
+      ctx.strokeStyle = g; ctx.beginPath();
       ctx.moveTo(this.trail[0][0], this.trail[0][1]);
-      for (let i = 1; i < this.trail.length; i++) {
-        ctx.lineTo(this.trail[i][0], this.trail[i][1]);
-      }
+      for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
       ctx.stroke();
     }
   }
 }
-
-// 爆炸图案
 function explodePattern(type, cx, cy, palette) {
   const speed = rand(180, 340);
   const count = Math.floor(rand(140, 240));
   const heavyChance = type === 'willow' ? 0.7 : 0.25;
-
-  const pushParticle = (vx, vy, heavy=false) => {
-    particles.push(new Particle({
-      x: cx, y: cy,
-      vx, vy,
-      size: heavy ? rand(1.6, 2.8) : rand(1.2, 2.0),
-      ttl: heavy ? rand(1.6, 2.6) : rand(1.1, 1.9),
-      color: palette,
-      heavy
-    }));
-  };
-
-  switch(type) {
+  const push = (vx, vy, heavy=false) => particles.push(new Particle({ x: cx, y: cy, vx, vy, size: heavy ? rand(1.6, 2.8) : rand(1.2, 2.0), ttl: heavy ? rand(1.6, 2.6) : rand(1.1, 1.9), color: palette, heavy }));
+  switch (type) {
     case 'ring': {
       const rings = Math.random() < 0.5 ? 1 : 2;
       for (let r = 0; r < rings; r++) {
-        const radiusScale = r === 0 ? 1 : 0.62;
+        const scale = r === 0 ? 1 : 0.62;
         for (let i = 0; i < count; i++) {
-          const a = (i / count) * TAU;
-          pushParticle(Math.cos(a) * speed * radiusScale, Math.sin(a) * speed * radiusScale, Math.random() < heavyChance);
+          const a = (i / count) * TAU; push(Math.cos(a)*speed*scale, Math.sin(a)*speed*scale, Math.random()<heavyChance);
         }
-      }
-      break;
+      } break;
     }
     case 'heart': {
-      // 心形参数方程
-      const n = Math.max(200, count);
-      const s = rand(8, 12);
+      const n = Math.max(200, count), s = rand(8, 12);
       for (let i = 0; i < n; i++) {
         const t = (i / n) * TAU;
-        const x = 16 * Math.pow(Math.sin(t), 3);
-        const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-        const nx = x * s, ny = -y * s;
-        const len = Math.hypot(nx, ny) || 1;
-        pushParticle((nx/len) * speed, (ny/len) * speed, Math.random() < 0.2);
-      }
-      break;
+        const x = 16*Math.pow(Math.sin(t),3);
+        const y = 13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+        const nx = x*s, ny = -y*s, len = Math.hypot(nx, ny)||1;
+        push((nx/len)*speed, (ny/len)*speed, Math.random()<0.2);
+      } break;
     }
     case 'willow': {
       const n = count * 1.1;
       for (let i = 0; i < n; i++) {
-        const a = Math.random() * TAU;
-        const k = Math.pow(Math.random(), 0.25);
-        pushParticle(Math.cos(a) * speed * k * 0.85, Math.sin(a) * speed * k * 0.6 - rand(30, 60), true);
-      }
-      break;
+        const a = Math.random()*TAU, k = Math.pow(Math.random(), 0.25);
+        push(Math.cos(a)*speed*k*0.85, Math.sin(a)*speed*k*0.6 - rand(30,60), true);
+      } break;
     }
     case 'chrysanthemum': {
       const petals = Math.floor(rand(6, 11));
       for (let i = 0; i < count; i++) {
-        const a = Math.random() * TAU;
-        const r = (Math.sin(petals * a) + 1) * 0.5;
-        pushParticle(Math.cos(a) * speed * (0.6 + 0.5 * r), Math.sin(a) * speed * (0.6 + 0.5 * r), Math.random() < heavyChance);
-      }
-      break;
+        const a = Math.random()*TAU, r = (Math.sin(petals*a)+1)*0.5;
+        push(Math.cos(a)*speed*(0.6+0.5*r), Math.sin(a)*speed*(0.6+0.5*r), Math.random()<heavyChance);
+      } break;
     }
-    default: { // peony
+    default: {
       for (let i = 0; i < count; i++) {
-        const a = Math.random() * TAU;
-        const k = Math.pow(Math.random(), 0.8);
-        pushParticle(Math.cos(a) * speed * k, Math.sin(a) * speed * k, Math.random() < heavyChance);
+        const a = Math.random()*TAU, k = Math.pow(Math.random(), 0.8);
+        push(Math.cos(a)*speed*k, Math.sin(a)*speed*k, Math.random()<heavyChance);
       }
     }
   }
-
-  // 冲击波与核心光晕
   shockwaves.push(new Shockwave(cx, cy, palette));
-  // 中心强光
-  for (let i = 0; i < 20; i++) {
-    particles.push(new Particle({
-      x: cx, y: cy,
-      vx: rand(-40, 40), vy: rand(-40, 40),
-      size: rand(1.4, 2.2),
-      ttl: rand(0.5, 1.0),
-      color: palette,
-      heavy: false,
-      glitter: true
-    }));
-  }
+  for (let i = 0; i < 20; i++) particles.push(new Particle({ x: cx, y: cy, vx: rand(-40,40), vy: rand(-40,40), size: rand(1.4,2.2), ttl: rand(0.5,1.0), color: palette, glitter: true }));
 }
-
 function explodeAt(x, y, palette, forceType) {
   const r = Math.random();
   const type = forceType || (r < 0.18 ? 'ring' : r < 0.38 ? 'chrysanthemum' : r < 0.65 ? 'peony' : r < 0.88 ? 'willow' : 'heart');
   explodePattern(type, x, y, palette || pickPalette());
 }
-
 function launchRocket(x, strength=1, palette, forceType) {
-  const baseX = x ?? rand(innerWidth * 0.15, innerWidth * 0.85);
-  const speed = rand(420, 580) * strength; // 提升初速度，升得更高
-  const angle = rand(-Math.PI * 0.06, Math.PI * 0.06);
+  const baseX = x ?? rand(innerWidth*0.15, innerWidth*0.85);
+  const speed = rand(420, 580) * strength;
+  const angle = rand(-Math.PI*0.06, Math.PI*0.06);
   const vx = Math.sin(angle) * (speed * 0.20);
   const vy = -Math.cos(angle) * speed;
   rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
-
-/* 仅在点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
   const cols = 5;
-  const paletteHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 }; // 甜蜜玫红
+  const palHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 };
   const spacing = innerWidth / (cols + 1);
   let delay = 0;
-
-  // 多列爱心火箭（更强推力）
   for (let i = 1; i <= cols; i++) {
-    setTimeout(() => {
-      const x = spacing * i;
-      launchRocket(x, 1.25, paletteHeart, 'heart');
-    }, delay);
+    setTimeout(() => launchRocket(spacing * i, 1.25, palHeart, 'heart'), delay);
     delay += 160;
   }
-
-  // 追加点缀（金色菊花/牡丹，升高）
-  const extras = 6;
-  for (let i = 0; i < extras; i++) {
+  for (let i = 0; i < 6; i++) {
     setTimeout(() => {
       const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
-      launchRocket(rand(innerWidth * 0.2, innerWidth * 0.8), rand(1.15, 1.35), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
+      launchRocket(rand(innerWidth*0.2, innerWidth*0.8), rand(1.15, 1.35), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
     }, delay + i * 140);
   }
 }
-
-// 动画循环（无自动烟花）
-let windT = 0;
-let last = performance.now();
+let windT = 0, last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.033, (now - last) / 1000); // seconds
-  last = now;
-  windT += dt * 0.8;
-
-  // 渐隐尾迹（不遮挡页面背景）
+  const dt = Math.min(0.033, (now - last) / 1000); last = now; windT += dt * 0.8;
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.fillRect(0, 0, innerWidth, innerHeight);
-
-  // 亮度叠加
   ctx.globalCompositeOperation = 'lighter';
-
-  // 更新火箭
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i];
     const alive = r.update(dt, windT);
     r.draw(ctx);
-    if (!alive) {
-      explodeAt(r.x, r.y, r.palette, r.forceType);
-      rockets.splice(i, 1);
-    }
+    if (!alive) { explodeAt(r.x, r.y, r.palette, r.forceType); rockets.splice(i, 1); }
   }
-
-  // 更新粒子
   const targetMax = innerWidth < 600 ? 900 : 1400;
   if (particles.length > targetMax) particles.splice(0, particles.length - targetMax);
-
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    if (!p.update(dt, windT)) {
-      particles.splice(i, 1);
-      continue;
-    }
+    if (!p.update(dt, windT)) { particles.splice(i, 1); continue; }
     p.draw(ctx);
-    // 偶发小亮片
     if (Math.random() < 0.05 && p.alpha > 0.6) {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.fillRect(p.x + rand(-1, 1), p.y + rand(-1, 1), 1, 1);
     }
   }
-
-  // 冲击波（最后绘制）
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const s = shockwaves[i];
     if (!s.update(dt)) shockwaves.splice(i, 1);
     else s.draw(ctx);
   }
-
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
