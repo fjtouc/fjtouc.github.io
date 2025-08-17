@@ -108,6 +108,24 @@ canvas#fireworks {
   z-index: 10;
 }
 
+/* 音频解锁提示（仅在自动播放被拦截时显示） */
+#audioTip {
+  position: fixed;
+  left: 50%;
+  bottom: 8vh;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  z-index: 9999;
+  display: none;
+  user-select: none;
+}
+
 /* 手机适配 */
 @media (max-width: 1024px) {
   #timeTogether { font-size: 3.2rem; margin-top: 6vh; }
@@ -131,13 +149,9 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<!-- 音频文件放在与 index.html 同级目录 -->
-<audio id="bgm" preload="auto" autoplay loop playsinline>
-  <source src="zshyn.mp3" type="audio/mpeg" />
-</audio>
-<audio id="yesMusic" preload="auto" playsinline>
-  <source src="yyzyq.mp3" type="audio/mpeg" />
-</audio>
+<!-- 音频文件均在与 index.html 同级 -->
+<audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
+<audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
 <h1 id="timeTogether"></h1>
 
@@ -150,6 +164,9 @@ canvas#fireworks {
 </div>
 
 <canvas id="fireworks"></canvas>
+
+<!-- 自动播放被阻止时，显示提示 -->
+<div id="audioTip">🔊 点一下开启背景音乐</div>
 
 <script>
 /* =========================
@@ -176,18 +193,34 @@ const yesBtn = document.getElementById("yes");
 const noBtn = document.getElementById("no");
 const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
+const audioTip = document.getElementById("audioTip");
 
+// 默认音量
 bgm.volume = 0.6;
 yesMusic.volume = 1.0;
 
-// 首次用户交互时尝试播放背景音乐（解决自动播放限制）
-const unlockAudio = () => {
-  if (bgm.paused) bgm.play().catch(()=>{});
-  document.removeEventListener('pointerdown', unlockAudio);
-  document.removeEventListener('touchstart', unlockAudio);
-};
-document.addEventListener('pointerdown', unlockAudio, { once: true });
-document.addEventListener('touchstart', unlockAudio, { once: true });
+// 页面载入后尽力自动播放背景音乐
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // 某些浏览器需要显式调用
+    await bgm.play();
+  } catch (e) {
+    // 被拦截则提示点击解锁
+    audioTip.style.display = 'block';
+    const unlock = async () => {
+      try {
+        await bgm.play();
+        audioTip.style.display = 'none';
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('touchstart', unlock);
+        window.removeEventListener('click', unlock);
+      } catch (e2) {}
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    window.addEventListener('click', unlock, { once: true });
+  }
+});
 
 noBtn.addEventListener("click", () => {
   let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
@@ -210,8 +243,6 @@ function fadeVolume(audio, target, duration = 300) {
 }
 
 yesBtn.addEventListener("click", () => {
-  // 确保背景音乐已解锁并播放
-  if (bgm.paused) bgm.play().catch(()=>{});
   // “愿意”短音乐播放，压低BGM再恢复
   try {
     fadeVolume(bgm, 0.25, 200);
@@ -269,7 +300,7 @@ function pickPalette() {
 const Physics = {
   gravity: 240,          // 重力 px/s^2
   airDrag: 0.992,        // 空气阻尼（粒子）
-  rocketDrag: 0.998,     // 空气阻尼（火箭）略小，飞更高
+  rocketDrag: 0.998,     // 空气阻尼（火箭），更高空
   windStrength: 4,       // 微风强度
 };
 
@@ -634,8 +665,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-
-// 不自动触发烟花，也不响应页面点击，只在“愿意”后触发。
 </script>
 </body>
 </html>
