@@ -131,14 +131,12 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<!-- 说明：
-1) 浏览器限制自动播放，已在脚本中通过用户首次交互解锁并播放。
-2) 点击“愿意”将同时播放短音乐，且会轻微压低背景音乐音量，结束后恢复。 -->
-<audio id="bgm" preload="auto" loop playsinline>
-  <source src="data/zshyn.mp3" type="audio/mpeg" />
+<!-- 音频文件放在与 index.html 同级目录 -->
+<audio id="bgm" preload="auto" autoplay loop playsinline>
+  <source src="zshyn.mp3" type="audio/mpeg" />
 </audio>
 <audio id="yesMusic" preload="auto" playsinline>
-  <source src="data/yyzyq.mp3" type="audio/mpeg" />
+  <source src="yyzyq.mp3" type="audio/mpeg" />
 </audio>
 
 <h1 id="timeTogether"></h1>
@@ -228,7 +226,6 @@ yesBtn.addEventListener("click", () => {
 
 /* =========================
    拟物烟花引擎（高颜值，无黑烟）
-   注：已移除黑烟效果，仅保留光晕、冲击波与拖尾
    ========================= */
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d", { alpha: true });
@@ -272,7 +269,7 @@ function pickPalette() {
 const Physics = {
   gravity: 240,          // 重力 px/s^2
   airDrag: 0.992,        // 空气阻尼（粒子）
-  rocketDrag: 0.997,     // 空气阻尼（火箭）
+  rocketDrag: 0.998,     // 空气阻尼（火箭）略小，飞更高
   windStrength: 4,       // 微风强度
 };
 
@@ -375,7 +372,7 @@ class Shockwave {
   }
   update(dt) {
     this.life += dt;
-    this.r += 180 * dt;
+    this.r += 200 * dt;
     return this.life < this.ttl;
   }
   draw(ctx) {
@@ -393,7 +390,7 @@ class Rocket {
   constructor(x, y, vx, vy, palette, forceType) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
-    this.ttl = rand(0.9, 1.8);
+    this.ttl = rand(1.0, 1.9);
     this.life = 0;
     this.palette = palette || pickPalette();
     this.forceType = forceType || null;
@@ -402,12 +399,12 @@ class Rocket {
   update(dt, windT) {
     // 轨迹
     this.trail.push([this.x, this.y]);
-    if (this.trail.length > 12) this.trail.shift();
+    if (this.trail.length > 14) this.trail.shift();
 
     // 风与重力
-    const wind = Math.sin(windT + this.y * 0.0018) * (Physics.windStrength * 0.5);
+    const wind = Math.sin(windT + this.y * 0.0015) * (Physics.windStrength * 0.5);
     this.vx += wind * dt;
-    this.vy += Physics.gravity * 0.9 * dt;
+    this.vy += Physics.gravity * 0.85 * dt;
 
     // 阻尼
     this.vx *= Physics.rocketDrag;
@@ -418,8 +415,11 @@ class Rocket {
     this.y += this.vy * dt;
     this.life += dt;
 
-    // 爆炸条件：达到顶点/寿命到期/开始下落
-    const explode = (this.vy > -10) || (this.life > this.ttl) || (this.y < innerHeight * 0.22);
+    // 爆炸条件：尽量升到屏幕顶部 10% 区域
+    const explodeTop = this.y < innerHeight * 0.10;
+    const explodeApex = this.vy > 20; // 开始明显下落
+    const explodeTimeout = this.life > this.ttl + 0.3;
+    const explode = explodeTop || explodeApex || explodeTimeout;
     return !explode;
   }
   draw(ctx) {
@@ -431,7 +431,7 @@ class Rocket {
     ctx.shadowBlur = 24;
     ctx.shadowColor = glow;
     ctx.fillStyle = head;
-    ctx.arc(this.x, this.y, 2.2, 0, TAU);
+    ctx.arc(this.x, this.y, 2.4, 0, TAU);
     ctx.fill();
     ctx.shadowBlur = 0;
 
@@ -454,14 +454,14 @@ class Rocket {
 
 // 爆炸图案
 function explodePattern(type, cx, cy, palette) {
-  const speed = rand(160, 320);
-  const count = Math.floor(rand(120, 220));
+  const speed = rand(180, 340);
+  const count = Math.floor(rand(140, 240));
   const heavyChance = type === 'willow' ? 0.7 : 0.25;
 
   const pushParticle = (vx, vy, heavy=false) => {
     particles.push(new Particle({
       x: cx, y: cy,
-      vx: vx, vy: vy,
+      vx, vy,
       size: heavy ? rand(1.6, 2.8) : rand(1.2, 2.0),
       ttl: heavy ? rand(1.6, 2.6) : rand(1.1, 1.9),
       color: palette,
@@ -483,17 +483,15 @@ function explodePattern(type, cx, cy, palette) {
     }
     case 'heart': {
       // 心形参数方程
-      const n = Math.max(180, count);
-      const s = rand(8, 11);
+      const n = Math.max(200, count);
+      const s = rand(8, 12);
       for (let i = 0; i < n; i++) {
         const t = (i / n) * TAU;
         const x = 16 * Math.pow(Math.sin(t), 3);
         const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
         const nx = x * s, ny = -y * s;
         const len = Math.hypot(nx, ny) || 1;
-        const vx = (nx / len) * speed;
-        const vy = (ny / len) * speed;
-        pushParticle(vx, vy, Math.random() < 0.2);
+        pushParticle((nx/len) * speed, (ny/len) * speed, Math.random() < 0.2);
       }
       break;
     }
@@ -501,10 +499,8 @@ function explodePattern(type, cx, cy, palette) {
       const n = count * 1.1;
       for (let i = 0; i < n; i++) {
         const a = Math.random() * TAU;
-        const k = Math.pow(Math.random(), 0.25); // 更长尾
-        const vx = Math.cos(a) * speed * k * 0.85;
-        const vy = Math.sin(a) * speed * k * 0.6 - rand(30, 60);
-        pushParticle(vx, vy, true);
+        const k = Math.pow(Math.random(), 0.25);
+        pushParticle(Math.cos(a) * speed * k * 0.85, Math.sin(a) * speed * k * 0.6 - rand(30, 60), true);
       }
       break;
     }
@@ -513,9 +509,7 @@ function explodePattern(type, cx, cy, palette) {
       for (let i = 0; i < count; i++) {
         const a = Math.random() * TAU;
         const r = (Math.sin(petals * a) + 1) * 0.5;
-        const vx = Math.cos(a) * speed * (0.6 + 0.5 * r);
-        const vy = Math.sin(a) * speed * (0.6 + 0.5 * r);
-        pushParticle(vx, vy, Math.random() < heavyChance);
+        pushParticle(Math.cos(a) * speed * (0.6 + 0.5 * r), Math.sin(a) * speed * (0.6 + 0.5 * r), Math.random() < heavyChance);
       }
       break;
     }
@@ -552,35 +546,35 @@ function explodeAt(x, y, palette, forceType) {
 
 function launchRocket(x, strength=1, palette, forceType) {
   const baseX = x ?? rand(innerWidth * 0.15, innerWidth * 0.85);
-  const speed = rand(260, 360) * strength;
+  const speed = rand(420, 580) * strength; // 提升初速度，升得更高
   const angle = rand(-Math.PI * 0.06, Math.PI * 0.06);
-  const vx = Math.sin(angle) * (speed * 0.22);
+  const vx = Math.sin(angle) * (speed * 0.20);
   const vy = -Math.cos(angle) * speed;
   rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
 
-/* 仅在点击“愿意”后触发的礼花阵列（多颗爱心+点缀） */
+/* 仅在点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
   const cols = 5;
   const paletteHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 }; // 甜蜜玫红
   const spacing = innerWidth / (cols + 1);
   let delay = 0;
 
-  // 多列爱心火箭
+  // 多列爱心火箭（更强推力）
   for (let i = 1; i <= cols; i++) {
     setTimeout(() => {
       const x = spacing * i;
-      launchRocket(x, 1.05, paletteHeart, 'heart');
+      launchRocket(x, 1.25, paletteHeart, 'heart');
     }, delay);
     delay += 160;
   }
 
-  // 追加点缀（金色菊花/牡丹）
+  // 追加点缀（金色菊花/牡丹，升高）
   const extras = 6;
   for (let i = 0; i < extras; i++) {
     setTimeout(() => {
       const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
-      launchRocket(rand(innerWidth * 0.2, innerWidth * 0.8), rand(0.95, 1.15), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
+      launchRocket(rand(innerWidth * 0.2, innerWidth * 0.8), rand(1.15, 1.35), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
     }, delay + i * 140);
   }
 }
@@ -641,8 +635,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// 不再自动触发烟花，也不响应页面点击，只在“愿意”后触发。
-// window.addEventListener('click', ...) 已移除
+// 不自动触发烟花，也不响应页面点击，只在“愿意”后触发。
 </script>
 </body>
 </html>
