@@ -130,13 +130,9 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<!--
-  说明：
-  - zshyn.mp3：进站即自动播放（先静音自动播，再尽力解静音；包含微信/支付宝等内置浏览器专用事件）
-  - yyzyq.mp3：仅在点击“愿意 ❤️”时播放
--->
-<audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline webkit-playsinline muted></audio>
-<audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline webkit-playsinline></audio>
+<!-- 音频与 index.html 同级。BGM 进站即尝试播放；“愿意”音效仅点击时播放 -->
+<audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
+<audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
 <h1 id="timeTogether"></h1>
 
@@ -172,13 +168,85 @@ const noBtn = document.getElementById("no");
 const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
 
-// 目标音量
-const BGM_TARGET_VOL = 0.6;
-bgm.volume = 0;        // 先 0 音量，避免突兀
-yesMusic.volume = 1.0; // 点“愿意”才播
+bgm.volume = 0.6;
+yesMusic.volume = 1.0;
+
+// 强力自动播放策略：
+// 1) 直接尝试播放
+// 2) 若被阻止，静音播放后立刻恢复音量
+// 3) 若仍被阻止，则绑定一次性解锁事件（任意用户交互均可，不限“愿意”按钮）
+async function autoplayBGM() {
+  try {
+    bgm.muted = false;
+    await bgm.play();
+  } catch (e1) {
+    try {
+      bgm.muted = true;
+      await bgm.play();
+      setTimeout(() => { bgm.muted = false; bgm.volume = 0.6; }, 200);
+    } catch (e2) {
+      const unlock = async () => {
+        try { bgm.muted = false; bgm.volume = 0.6; await bgm.play(); } catch (_) {}
+        removeUnlockers();
+      };
+      function addUnlockers() {
+        // 任意交互，包括点击、触摸、键盘、滚轮、滚动、鼠标移动、获得焦点
+        const opts = { once: true, passive: true, capture: true };
+        window.addEventListener('pointerdown', unlock, opts);
+        window.addEventListener('pointerup', unlock, opts);
+        window.addEventListener('touchstart', unlock, opts);
+        window.addEventListener('touchend', unlock, opts);
+        window.addEventListener('click', unlock, opts);
+        window.addEventListener('keydown', unlock, { once: true, capture: true });
+        window.addEventListener('wheel', unlock, opts);
+        window.addEventListener('scroll', unlock, opts);
+        window.addEventListener('mousemove', unlock, opts);
+        window.addEventListener('focus', unlock, { once: true, capture: true });
+        // 微信/易信内置浏览器
+        document.addEventListener('WeixinJSBridgeReady', unlock, { once: true });
+        document.addEventListener('YixinJSBridgeReady', unlock, { once: true });
+        // 页面返回前台
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') unlock();
+        }, { once: true });
+        // 存到全局用于移除
+        window._bgmUnlockers = unlock;
+      }
+      function removeUnlockers() {
+        const u = window._bgmUnlockers;
+        if (!u) return;
+        window.removeEventListener('pointerdown', u, true);
+        window.removeEventListener('pointerup', u, true);
+        window.removeEventListener('touchstart', u, true);
+        window.removeEventListener('touchend', u, true);
+        window.removeEventListener('click', u, true);
+        window.removeEventListener('keydown', u, true);
+        window.removeEventListener('wheel', u, true);
+        window.removeEventListener('scroll', u, true);
+        window.removeEventListener('mousemove', u, true);
+        window.removeEventListener('focus', u, true);
+        document.removeEventListener('WeixinJSBridgeReady', u, true);
+        document.removeEventListener('YixinJSBridgeReady', u, true);
+        window._bgmUnlockers = null;
+      }
+      addUnlockers();
+    }
+  }
+}
+// DOM 就绪与页面加载时均尝试一次
+document.addEventListener('DOMContentLoaded', autoplayBGM);
+window.addEventListener('load', autoplayBGM);
+
+// “不要”缩小，“愿意”放大
+noBtn.addEventListener("click", () => {
+  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
+  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
+  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
+  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
+});
 
 // 音量淡入淡出
-function fadeVolume(audio, target, duration = 400) {
+function fadeVolume(audio, target, duration = 300) {
   const start = audio.volume;
   const delta = target - start;
   const t0 = performance.now();
@@ -190,102 +258,13 @@ function fadeVolume(audio, target, duration = 400) {
   requestAnimationFrame(step);
 }
 
-// 最强力自动播放：
-// 1) 静音自动播（满足大多数浏览器策略）
-// 2) 尝试快速解静音 + 音量淡入；循环重试若被策略拒绝
-async function autoPlayBGM() {
-  try {
-    bgm.muted = true; // 先静音确保能自动播放
-    await bgm.play();
-  } catch (_) {
-    // 即使失败也继续后续解锁流程
-  }
-  forceAudible(10000); // 10 秒内反复尝试解静音并淡入目标音量
-}
-
-// 反复尝试解静音直至可听见或超时
-function forceAudible(maxMs = 8000) {
-  const t0 = performance.now();
-  const tick = async () => {
-    // 已经可听见则退出
-    if (!bgm.paused && bgm.currentTime > 0 && !bgm.muted && bgm.volume >= BGM_TARGET_VOL - 0.01) return;
-
-    try {
-      bgm.muted = false;
-      if (bgm.paused) await bgm.play();
-      // 淡入到目标音量
-      if (bgm.volume < BGM_TARGET_VOL) fadeVolume(bgm, BGM_TARGET_VOL, 600);
-    } catch (_) {
-      // 忽略，继续重试
-    }
-
-    if (performance.now() - t0 < maxMs) {
-      setTimeout(tick, 400);
-    }
-  };
-  // 尝试立即解静音一次，再进入循环
-  (async () => {
-    try {
-      bgm.muted = false;
-      if (bgm.paused) await bgm.play();
-      fadeVolume(bgm, BGM_TARGET_VOL, 600);
-    } catch (_) {}
-    setTimeout(tick, 300);
-  })();
-}
-
-// 关键时机触发自动播放与解锁
-document.addEventListener('DOMContentLoaded', autoPlayBGM);
-window.addEventListener('load', autoPlayBGM);
-window.addEventListener('pageshow', autoPlayBGM);
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') forceAudible(8000);
-});
-window.addEventListener('focus', () => forceAudible(8000));
-
-// 微信 / 支付宝 等内置浏览器的桥接事件（允许在此时直接播放有声）
-document.addEventListener('WeixinJSBridgeReady', () => {
-  try { bgm.muted = false; bgm.play(); fadeVolume(bgm, BGM_TARGET_VOL, 600); } catch(_) {}
-}, false);
-document.addEventListener('YixinJSBridgeReady', () => {
-  try { bgm.muted = false; bgm.play(); fadeVolume(bgm, BGM_TARGET_VOL, 600); } catch(_) {}
-}, false);
-document.addEventListener('AlipayJSBridgeReady', () => {
-  try { bgm.muted = false; bgm.play(); fadeVolume(bgm, BGM_TARGET_VOL, 600); } catch(_) {}
-}, false);
-
-// 作为兜底：任何一次自然交互也会确保已解锁（不需要点“愿意”，随便点一下页面即可）
-const unlockOnFirstInteraction = async () => {
-  forceAudible(8000);
-  window.removeEventListener('pointerdown', unlockOnFirstInteraction);
-  window.removeEventListener('touchstart', unlockOnFirstInteraction);
-  window.removeEventListener('click', unlockOnFirstInteraction);
-  window.removeEventListener('keydown', unlockOnFirstInteraction);
-  window.removeEventListener('wheel', unlockOnFirstInteraction, true);
-};
-window.addEventListener('pointerdown', unlockOnFirstInteraction, { once: true });
-window.addEventListener('touchstart', unlockOnFirstInteraction, { once: true });
-window.addEventListener('click', unlockOnFirstInteraction, { once: true });
-window.addEventListener('keydown', unlockOnFirstInteraction, { once: true });
-window.addEventListener('wheel', unlockOnFirstInteraction, { once: true, passive: true });
-
-// “不要”缩小，“愿意”放大
-noBtn.addEventListener("click", () => {
-  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
-  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
-});
-
-// 点击“愿意”：播放短音 + 触发烟花，同时把 BGM 音量轻降后回升
+// 点击“愿意”：播放短音 + 触发烟花（不负责启动 BGM，BGM 已独立自动播放）
 yesBtn.addEventListener("click", () => {
-  forceAudible(6000); // 再次确保 BGM 已经是有声状态
   fadeVolume(bgm, 0.25, 200);
   yesMusic.currentTime = 0;
   yesMusic.play().catch(()=>{});
-  yesMusic.onended = () => fadeVolume(bgm, BGM_TARGET_VOL, 400);
-
-  celebratoryHearts(); // 触发礼花
+  yesMusic.onended = () => fadeVolume(bgm, 0.6, 400);
+  celebratoryHearts();
 });
 
 /* =========================
@@ -328,12 +307,7 @@ function pickPalette() {
   return { hue, sat, lig, glitter: Math.floor(rand(p.glitter[0], p.glitter[1])) };
 }
 
-const Physics = {
-  gravity: 240,
-  airDrag: 0.992,
-  rocketDrag: 0.998,
-  windStrength: 4
-};
+const Physics = { gravity: 240, airDrag: 0.992, rocketDrag: 0.998, windStrength: 4 };
 
 const particles = [];
 const rockets = [];
@@ -360,17 +334,11 @@ class Particle {
   update(dt, windT) {
     this.trail.push([this.x, this.y]);
     if (this.trail.length > this.maxTrail) this.trail.shift();
-
     const wind = Math.sin(windT + this.y * 0.002) * (this.heavy ? Physics.windStrength * 0.2 : Physics.windStrength);
     this.vx += wind * dt;
     this.vy += Physics.gravity * dt * (this.heavy ? 1.1 : 1);
-
-    this.vx *= Physics.airDrag;
-    this.vy *= Physics.airDrag;
-
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-
+    this.vx *= Physics.airDrag; this.vy *= Physics.airDrag;
+    this.x += this.vx * dt; this.y += this.vy * dt;
     this.life += dt;
     this.alpha = 1 - (this.life / this.ttl);
     if (this.twinkle) {
@@ -383,7 +351,6 @@ class Particle {
     const { hue, sat, lig } = this.color;
     const core = hsla(hue, sat, lig + 10, clamp(this.alpha, 0, 1));
     const glow = hsla(hue, sat, 60, clamp(this.alpha * 0.3, 0, 0.6));
-
     if (this.trail.length > 1) {
       ctx.lineWidth = this.heavy ? 2 : 1.25;
       ctx.strokeStyle = glow;
@@ -392,7 +359,6 @@ class Particle {
       for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
       ctx.stroke();
     }
-
     ctx.beginPath();
     ctx.fillStyle = core;
     ctx.shadowBlur = 18;
@@ -400,7 +366,6 @@ class Particle {
     ctx.arc(this.x, this.y, this.bokeh ? this.size * 1.8 : this.size, 0, TAU);
     ctx.fill();
     ctx.shadowBlur = 0;
-
     if (this.glitter && Math.random() < 0.6) {
       ctx.globalAlpha = clamp(this.alpha * 0.8, 0, 1);
       ctx.fillStyle = hsla(hue, 100, 90, 0.9);
@@ -429,19 +394,10 @@ class Rocket {
   }
   update(dt, windT) {
     this.trail.push([this.x, this.y]); if (this.trail.length > 14) this.trail.shift();
-
     const wind = Math.sin(windT + this.y * 0.0015) * (Physics.windStrength * 0.5);
-    this.vx += wind * dt;
-    this.vy += Physics.gravity * 0.85 * dt;
-
-    this.vx *= Physics.rocketDrag;
-    this.vy *= Physics.rocketDrag;
-
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.life += dt;
-
-    // 尽量升到屏幕顶部 10% 区域再爆炸
+    this.vx += wind * dt; this.vy += Physics.gravity * 0.85 * dt;
+    this.vx *= Physics.rocketDrag; this.vy *= Physics.rocketDrag;
+    this.x += this.vx * dt; this.y += this.vy * dt; this.life += dt;
     const explodeTop = this.y < innerHeight * 0.10;
     const explodeApex = this.vy > 20;
     const explodeTimeout = this.life > this.ttl + 0.3;
@@ -452,16 +408,13 @@ class Rocket {
     const glow = hsla(this.palette.hue, this.palette.sat, 60, 0.5);
     ctx.globalCompositeOperation = 'lighter';
     ctx.beginPath(); ctx.shadowBlur = 24; ctx.shadowColor = glow; ctx.fillStyle = head;
-    ctx.arc(this.x, this.y, 2.4, 0, TAU);
-    ctx.fill(); ctx.shadowBlur = 0;
-
+    ctx.arc(this.x, this.y, 2.4, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
     if (this.trail.length > 1) {
       ctx.lineWidth = 2.2;
       const g = ctx.createLinearGradient(this.trail[0][0], this.trail[0][1], this.x, this.y);
       g.addColorStop(0, hsla(this.palette.hue, this.palette.sat, 60, 0));
       g.addColorStop(1, hsla(this.palette.hue, this.palette.sat, 70, 0.9));
-      ctx.strokeStyle = g;
-      ctx.beginPath();
+      ctx.strokeStyle = g; ctx.beginPath();
       ctx.moveTo(this.trail[0][0], this.trail[0][1]);
       for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
       ctx.stroke();
@@ -471,16 +424,15 @@ class Rocket {
 
 // 爆炸图案
 function explodePattern(type, cx, cy, palette) {
-  const speed = rand(180, 340);
-  const count = Math.floor(rand(140, 240));
+  const speed = Math.random() * (340 - 180) + 180;
+  const count = Math.floor(Math.random() * (240 - 140) + 140);
   const heavyChance = type === 'willow' ? 0.7 : 0.25;
   const push = (vx, vy, heavy=false) => particles.push(new Particle({
     x: cx, y: cy, vx, vy,
-    size: heavy ? rand(1.6, 2.8) : rand(1.2, 2.0),
-    ttl: heavy ? rand(1.6, 2.6) : rand(1.1, 1.9),
+    size: heavy ? Math.random() * (2.8 - 1.6) + 1.6 : Math.random() * (2.0 - 1.2) + 1.2,
+    ttl: heavy ? Math.random() * (2.6 - 1.6) + 1.6 : Math.random() * (1.9 - 1.1) + 1.1,
     color: palette, heavy
   }));
-
   switch (type) {
     case 'ring': {
       const rings = Math.random() < 0.5 ? 1 : 2;
@@ -490,35 +442,31 @@ function explodePattern(type, cx, cy, palette) {
           const a = (i / count) * TAU;
           push(Math.cos(a)*speed*scale, Math.sin(a)*speed*scale, Math.random()<heavyChance);
         }
-      }
-      break;
+      } break;
     }
     case 'heart': {
-      const n = Math.max(200, count), s = rand(8, 12);
+      const n = Math.max(200, count), s = Math.random() * (12 - 8) + 8;
       for (let i = 0; i < n; i++) {
         const t = (i / n) * TAU;
         const x = 16*Math.pow(Math.sin(t),3);
         const y = 13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
         const nx = x*s, ny = -y*s, len = Math.hypot(nx, ny)||1;
         push((nx/len)*speed, (ny/len)*speed, Math.random()<0.2);
-      }
-      break;
+      } break;
     }
     case 'willow': {
       const n = count * 1.1;
       for (let i = 0; i < n; i++) {
         const a = Math.random()*TAU, k = Math.pow(Math.random(), 0.25);
-        push(Math.cos(a)*speed*k*0.85, Math.sin(a)*speed*k*0.6 - rand(30,60), true);
-      }
-      break;
+        push(Math.cos(a)*speed*k*0.85, Math.sin(a)*speed*k*0.6 - (Math.random()*(60-30)+30), true);
+      } break;
     }
     case 'chrysanthemum': {
-      const petals = Math.floor(rand(6, 11));
+      const petals = Math.floor(Math.random() * (11 - 6) + 6);
       for (let i = 0; i < count; i++) {
         const a = Math.random()*TAU, r = (Math.sin(petals*a)+1)*0.5;
         push(Math.cos(a)*speed*(0.6+0.5*r), Math.sin(a)*speed*(0.6+0.5*r), Math.random()<heavyChance);
-      }
-      break;
+      } break;
     }
     default: {
       for (let i = 0; i < count; i++) {
@@ -527,93 +475,71 @@ function explodePattern(type, cx, cy, palette) {
       }
     }
   }
-
   shockwaves.push(new Shockwave(cx, cy, palette));
   for (let i = 0; i < 20; i++)
-    particles.push(new Particle({ x: cx, y: cy, vx: rand(-40,40), vy: rand(-40,40), size: rand(1.4,2.2), ttl: rand(0.5,1.0), color: palette, glitter: true }));
+    particles.push(new Particle({ x: cx, y: cy, vx: Math.random()*80-40, vy: Math.random()*80-40, size: Math.random()*(2.2-1.4)+1.4, ttl: Math.random()*(1.0-0.5)+0.5, color: palette, glitter: true }));
 }
-
 function explodeAt(x, y, palette, forceType) {
   const r = Math.random();
   const type = forceType || (r < 0.18 ? 'ring' : r < 0.38 ? 'chrysanthemum' : r < 0.65 ? 'peony' : r < 0.88 ? 'willow' : 'heart');
   explodePattern(type, x, y, palette || pickPalette());
 }
-
 function launchRocket(x, strength=1, palette, forceType) {
-  const baseX = x ?? rand(innerWidth*0.15, innerWidth*0.85);
-  const speed = rand(420, 580) * strength;
-  const angle = rand(-Math.PI*0.06, Math.PI*0.06);
+  const baseX = x ?? (Math.random() * (innerWidth * 0.85 - innerWidth * 0.15) + innerWidth * 0.15);
+  const speed = (Math.random() * (580 - 420) + 420) * strength;
+  const angle = Math.random() * (Math.PI*0.06 - -Math.PI*0.06) + -Math.PI*0.06;
   const vx = Math.sin(angle) * (speed * 0.20);
   const vy = -Math.cos(angle) * speed;
   rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
-
-/* 仅在点击“愿意”后触发的礼花阵列（顶端爱心为主） */
+/* 点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
   const cols = 5;
   const palHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 };
   const spacing = innerWidth / (cols + 1);
   let delay = 0;
-
-  // 多列爱心火箭（更强推力）
   for (let i = 1; i <= cols; i++) {
     setTimeout(() => launchRocket(spacing * i, 1.25, palHeart, 'heart'), delay);
     delay += 160;
   }
-
-  // 追加点缀（金色菊花/牡丹，升高）
   for (let i = 0; i < 6; i++) {
     setTimeout(() => {
       const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
-      launchRocket(rand(innerWidth*0.2, innerWidth*0.8), rand(1.15, 1.35), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
+      launchRocket(Math.random() * (innerWidth*0.8 - innerWidth*0.2) + innerWidth*0.2, Math.random() * (1.35 - 1.15) + 1.15, pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
     }, delay + i * 140);
   }
 }
 
 // 动画循环（无自动烟花）
-const canvas = document.getElementById("fireworks");
-const ctx = canvas.getContext("2d", { alpha: true });
 let windT = 0, last = performance.now();
 function frame(now) {
   const dt = Math.min(0.033, (now - last) / 1000); last = now; windT += dt * 0.8;
-
-  // 渐隐尾迹（不遮挡页面背景）
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.fillRect(0, 0, innerWidth, innerHeight);
-
-  // 亮度叠加
   ctx.globalCompositeOperation = 'lighter';
-
-  // 火箭
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i];
     const alive = r.update(dt, windT);
     r.draw(ctx);
     if (!alive) { explodeAt(r.x, r.y, r.palette, r.forceType); rockets.splice(i, 1); }
   }
-
-  // 粒子
   const targetMax = innerWidth < 600 ? 900 : 1400;
   if (particles.length > targetMax) particles.splice(0, particles.length - targetMax);
-
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     if (!p.update(dt, windT)) { particles.splice(i, 1); continue; }
     p.draw(ctx);
     if (Math.random() < 0.05 && p.alpha > 0.6) {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.fillRect(p.x + rand(-1, 1), p.y + rand(-1, 1), 1, 1);
+      ctx.fillRect(p.x + (Math.random()*2-1), p.y + (Math.random()*2-1), 1, 1);
     }
   }
-
-  // 冲击波
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const s = shockwaves[i];
     if (!s.update(dt)) shockwaves.splice(i, 1);
     else s.draw(ctx);
   }
-
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
