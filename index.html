@@ -95,13 +95,6 @@ body {
   box-shadow:
     0 12px 24px rgba(0,0,0,.25),
     inset 0 2px 18px rgba(255,255,255,.15);
-  /* 让“不要”按钮可以到处乱窜（覆盖默认布局影响） */
-  position: fixed;
-  left: 60%;
-  top: 70%;
-  margin: 0;
-  z-index: 20; /* 在烟花之上，canvas 是 10 */
-  transition: left .12s ease, top .12s ease, transform .12s ease, filter .12s ease;
 }
 #no:hover { transform: translateY(-2px); filter: brightness(1.02); }
 #no:active { transform: translateY(0); filter: brightness(.98); }
@@ -227,75 +220,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('touchstart', unlock, { once: true });
     window.addEventListener('click', unlock, { once: true });
   }
-
-  // 初始化“不要”按钮随机位置
-  setTimeout(() => randomPlaceNoBtn(), 0);
 });
 
-/* —— 改成“不要”按钮到处乱窜 —— */
+noBtn.addEventListener("click", () => {
+  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
+  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
+  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
+  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
+});
 
-// 工具：随机数与放置
-const rand = (min, max) => Math.random() * (max - min) + min; // 与烟花部分一致
-function placeNoBtnAt(x, y) {
-  const r = noBtn.getBoundingClientRect();
-  const w = r.width, h = r.height;
-  const nx = clamp(Math.floor(x), 8, innerWidth - w - 8);
-  const ny = clamp(Math.floor(y), 8, innerHeight - h - 8);
-  noBtn.style.left = nx + 'px';
-  noBtn.style.top  = ny + 'px';
-}
-function randomPlaceNoBtn() {
-  const minY = Math.max(80, innerHeight * 0.25);
-  placeNoBtnAt(rand(40, innerWidth - 140), rand(minY, innerHeight - 100));
-}
-
-// 让按钮远离某个点（鼠标/手指）
-function runAwayFrom(px, py) {
-  const r = noBtn.getBoundingClientRect();
-  const cx = r.left + r.width / 2;
-  const cy = r.top + r.height / 2;
-  const dx = cx - px;
-  const dy = cy - py;
-  const dist = Math.hypot(dx, dy) || 1;
-
-  // 安全半径
-  const radius = Math.max(120, Math.min(innerWidth, innerHeight) * 0.12);
-
-  if (dist < radius) {
-    // 逃离距离 + 抖动
-    const move = (radius - dist) + rand(60, 180);
-    const jitterX = rand(-40, 40);
-    const jitterY = rand(-40, 40);
-    const nx = r.left + (dx / dist) * move + jitterX;
-    const ny = r.top  + (dy / dist) * move + jitterY;
-    placeNoBtnAt(nx, ny);
-  } else if (Math.random() < 0.12) {
-    // 偶尔小幅乱蹿
-    placeNoBtnAt(r.left + rand(-120, 120), r.top + rand(-90, 90));
-  }
-}
-
-// 监听鼠标移动/悬停/点击（防点到）
-window.addEventListener('pointermove', e => runAwayFrom(e.clientX, e.clientY), { passive: true });
-noBtn.addEventListener('pointerenter', e => runAwayFrom(e.clientX, e.clientY));
-noBtn.addEventListener('pointerdown', e => { e.preventDefault(); runAwayFrom(e.clientX, e.clientY); });
-noBtn.addEventListener('click', e => { e.preventDefault(); runAwayFrom(e.clientX, e.clientY); });
-
-// 触摸场景：手指靠近即躲避
-window.addEventListener('touchstart', e => {
-  for (const t of e.touches) runAwayFrom(t.clientX, t.clientY);
-}, { passive: true });
-window.addEventListener('touchmove', e => {
-  for (const t of e.touches) runAwayFrom(t.clientX, t.clientY);
-}, { passive: true });
-
-// 定时随机抖动，让它“到处乱窜”
-setInterval(() => {
-  const r = noBtn.getBoundingClientRect();
-  placeNoBtnAt(r.left + rand(-160, 160), r.top + rand(-120, 120));
-}, 2200);
-
-// “愿意”按钮：播放短音乐与烟花
 // 简单音量淡入淡出
 function fadeVolume(audio, target, duration = 300) {
   const start = audio.volume;
@@ -341,9 +274,10 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 // 工具
-// 注意：rand 与 clamp 已在上方使用，这里继续共用
+const rand = (min, max) => Math.random() * (max - min) + min;
 const TAU = Math.PI * 2;
 function hsla(h, s, l, a) { return `hsla(${h}, ${s}%, ${l}%, ${a})`; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function mix(a, b, t) { return a + (b - a) * t; }
 
 const palettes = [
