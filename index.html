@@ -2,198 +2,124 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#ff4d6d" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>七夕快乐 ❤️</title>
-
-<!-- 优化字体渲染 -->
-<meta http-equiv="x-dns-prefetch-control" content="on" />
-<link rel="preload" as="image" href="bg.jpg" />
-<link rel="preload" as="audio" href="zshyn.mp3" />
-<link rel="preload" as="audio" href="yyzyq.mp3" />
-
 <style>
-/* 设计变量 */
-:root{
-  --accent: #ff4d6d;
-  --accent-soft: #ff99ad;
-  --accent-deep: #e91948;
-  --text-on-dark: #ffd8e4;
-  --glass-bg: linear-gradient(180deg, rgba(255, 128, 173, .14), rgba(255, 96, 144, .08));
-  --glass-border: rgba(255, 150, 180, .25);
-  --shadow-accent: rgba(255, 77, 109, .22);
-  --shadow-ink: rgba(0,0,0,.25);
-  --bg-overlay: radial-gradient(120% 120% at 20% 0%, rgba(255, 77, 109,.25), rgba(255, 77, 109, 0) 50%),
-                 radial-gradient(120% 120% at 80% 100%, rgba(92, 0, 44,.18), rgba(92, 0, 44,0) 50%);
-}
-
-/* Reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
-html { -webkit-text-size-adjust: 100%; }
 body {
   min-height: 100vh;
-  color: #fff;
-  background: #0f0b10;
-  font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Roboto, Helvetica, Arial, "Noto Sans", "WenQuanYi Micro Hei", system-ui, -apple-system, sans-serif;
+  background: url('bg.jpg') no-repeat center center / cover fixed;
+  font-family: '微软雅黑', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* 背景图 + 柔和渐变叠加，保证对比度 */
-  background-image:
-    var(--bg-overlay),
-    url('bg.jpg');
-  background-size: cover, cover;
-  background-position: center, center;
-  background-attachment: fixed, fixed;
 }
 
-/* 提高可读性与动效观感 */
-body::after{
-  content:"";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(150% 120% at 50% 10%, rgba(255,255,255,.10), rgba(255,255,255,0) 50%);
-  mix-blend-mode: screen;
-  z-index: 0;
-}
-
-/* 顶部时间（玻璃拟物 + 渐变文字） */
+/* 顶部时间显示（玻璃拟物） */
 #timeTogether {
-  position: relative;
-  z-index: 2;
-  font-size: clamp(2rem, 5vw, 4rem);
-  font-weight: 900;
-  color: transparent;
-  background-image: linear-gradient(180deg, #ffe6ee, #ffc1d4 55%, #ff9cbc);
-  -webkit-background-clip: text;
-          background-clip: text;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .5px;
+  font-size: 4rem;
+  font-weight: 800;
+  color: #ffd2e1;
   text-align: center;
-  margin-top: clamp(3vh, 6vw, 8vh);
-  padding: .6rem 1.4rem;
-  border-radius: 18px;
-  backdrop-filter: blur(8px) saturate(1.2);
-  -webkit-backdrop-filter: blur(8px) saturate(1.2);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  margin-top: 8vh;
+  padding: .5rem 1.25rem;
+  border-radius: 16px;
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  background: linear-gradient(180deg, rgba(255, 128, 173, .14), rgba(255, 96, 144, .08));
+  border: 1px solid rgba(255, 150, 180, .25);
   box-shadow:
-    0 12px 30px var(--shadow-accent),
-    inset 0 0 24px rgba(255,255,255,.08);
-  text-shadow: 0 6px 24px rgba(255, 77, 109, .45);
-  user-select: none;
-  animation: floatIn .8s cubic-bezier(.2,.8,.2,1) both .1s;
+    0 10px 30px rgba(255, 77, 109, .22),
+    inset 0 0 20px rgba(255, 255, 255, .08);
+  text-shadow: 0 6px 24px rgba(255, 77, 109, .6);
 }
 
 /* 中间内容容器 */
 .middle {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  align-content: start;
-  gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   flex: 1;
-  width: min(1200px, 100%);
-  padding: clamp(16vh, 24vh, 26vh) 1.2rem 10vh;
+  padding-top: 26vh;
 }
 
-/* 标题拟物光晕 + 轻微心跳 */
+/* 标题拟物光晕 */
 #question {
-  font-size: clamp(2rem, 7vw, 5rem);
-  font-weight: 1000;
-  letter-spacing: 1px;
-  text-align: center;
-  color: var(--accent);
+  font-size: 5rem;
+  font-weight: 900;
+  color: #ff4d6d;
+  letter-spacing: 2px;
   text-shadow:
+    0 0 0 transparent,
     0 10px 30px rgba(255, 77, 109, .45),
     0 0 30px rgba(255, 180, 200, .55);
+  text-align: center;
+  margin-bottom: 4vh;
   padding: 0 .5rem;
-  animation: popIn .9s cubic-bezier(.2,.8,.2,1) both .15s, heartbeat 3.6s ease-in-out infinite .9s;
 }
 
 /* 按钮组 */
-#buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(.6rem, 2.5vw, 1.2rem);
-  text-align: center;
-}
+#buttons { text-align: center; }
 
-/* 通用按钮（拟物+可达性） */
+/* 拟物按钮 */
 .btn {
-  position: relative;
-  padding: clamp(.9rem, 2.6vw, 1.2rem) clamp(1.6rem, 4.5vw, 2.6rem);
-  font-size: clamp(1.1rem, 2.8vw, 2rem);
-  font-weight: 800;
+  padding: 18px 40px;
+  font-size: 2rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background-position .3s ease;
+  margin: 15px;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
   will-change: transform;
   user-select: none;
-  outline: none;
-}
-.btn:focus-visible{
-  box-shadow: 0 0 0 3px rgba(255, 77, 109, .35);
 }
 
-/* “愿意”按钮 */
 #yes {
-  background:
-    radial-gradient(120% 120% at 70% 30%, var(--accent-soft), var(--accent) 58%, var(--accent-deep) 100%);
-  background-position: 50% 50%;
+  background: radial-gradient(120% 120% at 70% 30%, #ff99ad, #ff4d6d 55%, #e91948 100%);
   color: #fff;
   box-shadow:
-    0 14px 28px rgba(233, 25, 72, .36),
-    0 6px 12px rgba(233, 25, 72, .25),
+    0 12px 28px rgba(233, 25, 72, .36),
+    0 4px 10px rgba(233, 25, 72, .25),
     inset 0 2px 18px rgba(255,255,255,.35);
   text-shadow: 0 4px 18px rgba(255,255,255,.25);
 }
-#yes:hover { transform: translateY(-2px) scale(1.035); filter: brightness(1.06); }
-#yes:active { transform: translateY(0) scale(.985); filter: brightness(.98); }
+#yes:hover { transform: translateY(-2px) scale(1.03); filter: brightness(1.05); }
+#yes:active { transform: translateY(0) scale(.99); filter: brightness(.98); }
 
-/* “不要”按钮（柔和金属风） */
 #no {
-  background: linear-gradient(180deg, #8a8a8a, #5e5e5e);
+  background: linear-gradient(180deg, #7a7a7a, #565656);
   color: #fff;
   box-shadow:
-    0 12px 24px var(--shadow-ink),
-    inset 0 2px 18px rgba(255,255,255,.16);
+    0 12px 24px rgba(0,0,0,.25),
+    inset 0 2px 18px rgba(255,255,255,.15);
+  /* 让“不要”按钮可以到处乱窜（覆盖默认布局影响） */
+  position: fixed;
+  left: 60%;
+  top: 70%;
+  margin: 0;
+  z-index: 20; /* 在烟花之上，canvas 是 10 */
+  transition: left .12s ease, top .12s ease, transform .12s ease, filter .12s ease;
 }
-#no:hover { transform: translateY(-2px); filter: brightness(1.03) saturate(1.02); }
+#no:hover { transform: translateY(-2px); filter: brightness(1.02); }
 #no:active { transform: translateY(0); filter: brightness(.98); }
 
-/* 调皮“不要”逃跑（非无障碍用户） */
-@media (pointer: fine) {
-  #no.bouncy {
-    transition: transform .12s ease, filter .18s ease;
-  }
-  #no.bouncy:hover {
-    transform: translate(var(--dx, 0), var(--dy, 0)) scale(.98);
-  }
-}
-
-/* 烟花画布 */
 canvas#fireworks {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
+  z-index: 10;
 }
 
 /* 音频解锁提示（仅在自动播放被拦截时显示） */
 #audioTip {
   position: fixed;
   left: 50%;
-  bottom: calc(8vh + env(safe-area-inset-bottom));
+  bottom: 8vh;
   transform: translateX(-50%);
   padding: 10px 16px;
   border-radius: 999px;
@@ -205,54 +131,42 @@ canvas#fireworks {
   z-index: 9999;
   display: none;
   user-select: none;
-  backdrop-filter: blur(4px);
-}
-
-/* 进场动效 */
-@keyframes floatIn {
-  from { opacity: 0; transform: translateY(-8px) scale(.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes popIn {
-  from { opacity: 0; transform: translateY(10px) scale(.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes heartbeat {
-  0%, 28%, 100% { transform: none; }
-  14% { transform: scale(1.02); }
 }
 
 /* 手机适配 */
 @media (max-width: 1024px) {
-  #timeTogether { margin-top: 6vh; }
+  #timeTogether { font-size: 3.2rem; margin-top: 6vh; }
+  #question { font-size: 4.2rem; }
 }
 @media (max-width: 768px) {
-  #question { margin-bottom: 1vh; }
+  #timeTogether { font-size: 2.6rem; margin-top: 4vh; }
+  #question { font-size: 3.2rem; margin-bottom: 3vh; }
+  .btn { padding: 16px 28px; font-size: 1.6rem; }
 }
 @media (max-width: 480px) {
-  #question { margin-bottom: .4vh; }
+  #timeTogether { font-size: 2.2rem; margin-top: 3vh; }
+  #question { font-size: 2.6rem; margin-bottom: 2.4vh; }
+  .btn { padding: 16px 26px; font-size: 1.5rem; }
 }
 
-/* 减少运动偏好：关闭烟花和大动效 */
+/* 运动减少偏好 */
 @media (prefers-reduced-motion: reduce) {
-  #fireworks { display: none !important; }
-  * { animation: none !important; transition: none !important; }
+  #fireworks { display: none; }
 }
 </style>
 </head>
-
 <body>
 <!-- 音频文件均在与 index.html 同级 -->
 <audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
 <audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
-<h1 id="timeTogether" aria-live="polite" aria-atomic="true"></h1>
+<h1 id="timeTogether"></h1>
 
-<div class="middle" role="group" aria-labelledby="question">
+<div class="middle">
   <h2 id="question">你愿意和我永远在一起吗？</h2>
   <div id="buttons">
-    <button id="yes" class="btn" aria-label="我愿意，永远在一起">愿意 ❤️</button>
-    <button id="no" class="btn bouncy" aria-label="不要">不要 😢</button>
+    <button id="yes" class="btn">愿意 ❤️</button>
+    <button id="no" class="btn">不要 😢</button>
   </div>
 </div>
 
@@ -263,12 +177,10 @@ canvas#fireworks {
 
 <script>
 /* =========================
-   在一起时间显示（稳定字宽）
+   在一起时间显示
    ========================= */
 const startDate = new Date("2024-06-28T00:00:00");
 const timeEl = document.getElementById("timeTogether");
-
-function pad(n){ return String(n).padStart(2, "0"); }
 function updateTime() {
   const now = new Date();
   const diff = now - startDate;
@@ -276,7 +188,7 @@ function updateTime() {
   const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((diff / (1000 * 60)) % 60);
   const seconds = Math.floor((diff / 1000) % 60);
-  timeEl.textContent = `我们已经在一起 ${days} 天 ${pad(hours)} 小时 ${pad(minutes)} 分 ${pad(seconds)} 秒`;
+  timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
 }
 setInterval(updateTime, 1000);
 updateTime();
@@ -297,8 +209,10 @@ yesMusic.volume = 1.0;
 // 页面载入后尽力自动播放背景音乐
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // 某些浏览器需要显式调用
     await bgm.play();
   } catch (e) {
+    // 被拦截则提示点击解锁
     audioTip.style.display = 'block';
     const unlock = async () => {
       try {
@@ -313,33 +227,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('touchstart', unlock, { once: true });
     window.addEventListener('click', unlock, { once: true });
   }
+
+  // 初始化“不要”按钮随机位置
+  setTimeout(() => randomPlaceNoBtn(), 0);
 });
 
-// 调皮 “不要” 逃跑：移动一点点位置
-function playfulRunaway(el){
-  const maxX = Math.min(140, Math.max(60, window.innerWidth * 0.12));
-  const maxY = Math.min(90, Math.max(40, window.innerHeight * 0.08));
-  const dx = (Math.random() * 2 - 1) * maxX;
-  const dy = (Math.random() * 2 - 1) * maxY;
-  el.style.setProperty('--dx', dx.toFixed(0) + 'px');
-  el.style.setProperty('--dy', dy.toFixed(0) + 'px');
+/* —— 改成“不要”按钮到处乱窜 —— */
+
+// 工具：随机数与放置
+const rand = (min, max) => Math.random() * (max - min) + min; // 与烟花部分一致
+function placeNoBtnAt(x, y) {
+  const r = noBtn.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  const nx = clamp(Math.floor(x), 8, innerWidth - w - 8);
+  const ny = clamp(Math.floor(y), 8, innerHeight - h - 8);
+  noBtn.style.left = nx + 'px';
+  noBtn.style.top  = ny + 'px';
 }
-noBtn.addEventListener('mouseenter', () => {
-  // 仅桌面端 + 非减弱运动用户
-  if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    playfulRunaway(noBtn);
+function randomPlaceNoBtn() {
+  const minY = Math.max(80, innerHeight * 0.25);
+  placeNoBtnAt(rand(40, innerWidth - 140), rand(minY, innerHeight - 100));
+}
+
+// 让按钮远离某个点（鼠标/手指）
+function runAwayFrom(px, py) {
+  const r = noBtn.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  const dx = cx - px;
+  const dy = cy - py;
+  const dist = Math.hypot(dx, dy) || 1;
+
+  // 安全半径
+  const radius = Math.max(120, Math.min(innerWidth, innerHeight) * 0.12);
+
+  if (dist < radius) {
+    // 逃离距离 + 抖动
+    const move = (radius - dist) + rand(60, 180);
+    const jitterX = rand(-40, 40);
+    const jitterY = rand(-40, 40);
+    const nx = r.left + (dx / dist) * move + jitterX;
+    const ny = r.top  + (dy / dist) * move + jitterY;
+    placeNoBtnAt(nx, ny);
+  } else if (Math.random() < 0.12) {
+    // 偶尔小幅乱蹿
+    placeNoBtnAt(r.left + rand(-120, 120), r.top + rand(-90, 90));
   }
-});
+}
 
-// 点击“不要”时，放大“愿意”并缩小“不要”
-noBtn.addEventListener("click", () => {
-  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
-  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
-  if (navigator.vibrate) navigator.vibrate(10);
-});
+// 监听鼠标移动/悬停/点击（防点到）
+window.addEventListener('pointermove', e => runAwayFrom(e.clientX, e.clientY), { passive: true });
+noBtn.addEventListener('pointerenter', e => runAwayFrom(e.clientX, e.clientY));
+noBtn.addEventListener('pointerdown', e => { e.preventDefault(); runAwayFrom(e.clientX, e.clientY); });
+noBtn.addEventListener('click', e => { e.preventDefault(); runAwayFrom(e.clientX, e.clientY); });
 
+// 触摸场景：手指靠近即躲避
+window.addEventListener('touchstart', e => {
+  for (const t of e.touches) runAwayFrom(t.clientX, t.clientY);
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+  for (const t of e.touches) runAwayFrom(t.clientX, t.clientY);
+}, { passive: true });
+
+// 定时随机抖动，让它“到处乱窜”
+setInterval(() => {
+  const r = noBtn.getBoundingClientRect();
+  placeNoBtnAt(r.left + rand(-160, 160), r.top + rand(-120, 120));
+}, 2200);
+
+// “愿意”按钮：播放短音乐与烟花
 // 简单音量淡入淡出
 function fadeVolume(audio, target, duration = 300) {
   const start = audio.volume;
@@ -356,17 +312,14 @@ function fadeVolume(audio, target, duration = 300) {
 yesBtn.addEventListener("click", () => {
   // “愿意”短音乐播放，压低BGM再恢复
   try {
-    fadeVolume(bgm, 0.25, 220);
+    fadeVolume(bgm, 0.25, 200);
     yesMusic.currentTime = 0;
     yesMusic.play().catch(()=>{});
-    yesMusic.onended = () => fadeVolume(bgm, 0.6, 420);
+    yesMusic.onended = () => fadeVolume(bgm, 0.6, 400);
   } catch(e) {}
 
-  // 触发烟花
+  // 仅在点击“愿意”时触发烟花
   celebratoryHearts();
-
-  // 轻微触感反馈
-  if (navigator.vibrate) navigator.vibrate([8, 30, 12]);
 });
 
 /* =========================
@@ -388,10 +341,9 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 // 工具
-const rand = (min, max) => Math.random() * (max - min) + min;
+// 注意：rand 与 clamp 已在上方使用，这里继续共用
 const TAU = Math.PI * 2;
 function hsla(h, s, l, a) { return `hsla(${h}, ${s}%, ${l}%, ${a})`; }
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function mix(a, b, t) { return a + (b - a) * t; }
 
 const palettes = [
@@ -414,7 +366,7 @@ function pickPalette() {
 const Physics = {
   gravity: 240,          // 重力 px/s^2
   airDrag: 0.992,        // 空气阻尼（粒子）
-  rocketDrag: 0.998,     // 空气阻尼（火箭）
+  rocketDrag: 0.998,     // 空气阻尼（火箭），更高空
   windStrength: 4,       // 微风强度
 };
 
@@ -698,7 +650,7 @@ function launchRocket(x, strength=1, palette, forceType) {
   rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
 
-/* 点击“愿意”后触发的礼花阵列（爱心为主） */
+/* 仅在点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
   const cols = 5;
   const paletteHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 }; // 甜蜜玫红
@@ -714,7 +666,7 @@ function celebratoryHearts() {
     delay += 160;
   }
 
-  // 点缀（金色菊花/牡丹）
+  // 追加点缀（金色菊花/牡丹，升高）
   const extras = 6;
   for (let i = 0; i < extras; i++) {
     setTimeout(() => {
@@ -734,7 +686,7 @@ function frame(now) {
 
   // 渐隐尾迹（不遮挡页面背景）
   ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.fillRect(0, 0, innerWidth, innerHeight);
 
   // 亮度叠加
