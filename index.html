@@ -1,154 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>七夕快乐 ❤️</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    height: 100vh;
-    background: url('bg.jpg') no-repeat center center/cover;
-    font-family: '微软雅黑', sans-serif;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* 顶部时间显示 */
-#timeTogether {
-    font-size: 4rem; /* 比问题文字大一点 */
-    font-weight: bold;
-    color: #ff6fa1;
-    text-align: center;
-    margin-top: 10vh; /* 顶部偏下 */
-}
-
-/* 中间内容容器 */
-.middle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; /* 顶部对齐 */
-    flex: 1;
-    padding-top: 30vh; /* 问题文字略偏下 */
-}
-
-#question {
-    font-size: 5rem;
-    font-family: '微软雅黑', sans-serif;
-    color: #ff4d6d;
-    text-shadow: 0 0 18px rgba(255, 77, 109, 0.7);
-    text-align: center;
-    margin-bottom: 5vh;
-}
-
-#buttons {
-    text-align: center;
-}
-
-.btn {
-    padding: 18px 40px;
-    font-size: 2rem;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    margin: 15px;
-    transition: all 0.3s ease;
-}
-
-#yes {
-    background-color: #ff4d6d;
-    color: white;
-    box-shadow: 0 0 20px rgba(255,77,109,0.9);
-}
-
-#no {
-    background-color: #666;
-    color: white;
-    box-shadow: 0 0 20px rgba(255,255,255,0.3);
-}
-
-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-}
-
-/* 手机适配 */
-@media (max-width: 768px) {
-    #timeTogether { font-size: 3rem; margin-top: 4vh; }
-    #question { font-size: 4rem; margin-bottom: 4vh; }
-    .btn { padding: 20px 50px; font-size: 2.2rem; }
-}
-
-@media (max-width: 480px) {
-    #timeTogether { font-size: 2.8rem; margin-top: 3vh; }
-    #question { font-size: 3.5rem; margin-bottom: 3vh; }
-    .btn { padding: 22px 55px; font-size: 2.5rem; }
-}
-</style>
-</head>
-<body>
-<audio id="bgm" autoplay loop>
-    <source src="data/zshyn.mp3" type="audio/mpeg">
-</audio>
-<audio id="yesMusic">
-    <source src="data/yyzyq.mp3" type="audio/mpeg">
-</audio>
-
-<h1 id="timeTogether"></h1>
-
-<div class="middle">
-    <h2 id="question">你愿意和我永远在一起吗？</h2>
-    <div id="buttons">
-        <button id="yes" class="btn">愿意 ❤️</button>
-        <button id="no" class="btn">不要 😢</button>
-    </div>
-</div>
-
-<canvas id="fireworks"></canvas>
-
 <script>
-// 计算在一起时间
-const startDate = new Date("2024-06-28T00:00:00");
-const timeEl = document.getElementById("timeTogether");
-
-function updateTime() {
-    const now = new Date();
-    const diff = now - startDate;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-    timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
-}
-setInterval(updateTime, 1000);
-updateTime();
-
-// 按钮交互
-const yesBtn = document.getElementById("yes");
-const noBtn = document.getElementById("no");
-const yesMusic = document.getElementById("yesMusic");
-
-noBtn.addEventListener("click", () => {
-    let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-    let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-    yesBtn.style.fontSize = (yesSize * 1.2) + "px";
-    noBtn.style.fontSize = (noSize * 0.8) + "px";
-});
-
-yesBtn.addEventListener("click", () => {
-    yesMusic.currentTime = 0;
-    yesMusic.play();
-    for (let i = 0; i < 20; i++) {
-        setTimeout(() => {
-            createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
-        }, i * 200);
-    }
-});
-
 // 烟花效果
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d");
@@ -161,36 +11,73 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
+// 创建烟花
 function createFirework(x, y) {
-    for (let i = 0; i < 180; i++) {
+    const hue = Math.random() * 360; // 统一色相，像真实烟花那样同色系
+    const particleCount = 120 + Math.random() * 60;
+    for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 * i) / particleCount;
+        const speed = Math.random() * 6 + 4;
         particles.push({
             x: x,
             y: y,
-            speedX: (Math.random() - 0.5) * 12,
-            speedY: (Math.random() - 0.5) * 12,
-            radius: Math.random() * 4 + 2,
+            speedX: Math.cos(angle) * speed,
+            speedY: Math.sin(angle) * speed,
+            radius: Math.random() * 3 + 1.5,
             alpha: 1,
-            color: `hsl(${Math.random() * 360}, 100%, 60%)`
+            life: 1,
+            color: `hsl(${hue + Math.random() * 20 - 10}, 100%, 60%)`,
+            trail: []
         });
     }
 }
 
+// 绘制烟花
 function drawFireworks() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 半透明覆盖，制造拖尾效果
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     particles.forEach((p, i) => {
-        ctx.globalAlpha = p.alpha;
+        // 更新轨迹
+        p.trail.push({ x: p.x, y: p.y, alpha: p.alpha });
+        if (p.trail.length > 8) p.trail.shift();
+
+        // 绘制拖尾
+        for (let t = 0; t < p.trail.length; t++) {
+            const point = p.trail[t];
+            ctx.beginPath();
+            ctx.globalAlpha = point.alpha * (t / p.trail.length);
+            ctx.fillStyle = p.color;
+            ctx.arc(point.x, point.y, p.radius * (t / p.trail.length), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 绘制主粒子带光晕
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+        gradient.addColorStop(0, p.color);
+        gradient.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = p.alpha;
+        ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
         ctx.fill();
+
+        // 更新物理效果
         p.x += p.speedX;
         p.y += p.speedY;
-        p.alpha -= 0.015;
+        p.speedY += 0.05; // 重力
+        p.alpha -= 0.012; // 衰减
+
+        // 闪烁效果
+        if (Math.random() < 0.05) p.alpha *= 0.9;
+
+        // 移除消失的粒子
         if (p.alpha <= 0) particles.splice(i, 1);
     });
+
+    ctx.globalAlpha = 1;
     requestAnimationFrame(drawFireworks);
 }
 drawFireworks();
 </script>
-</body>
-</html>
