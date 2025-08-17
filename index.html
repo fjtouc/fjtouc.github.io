@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -16,122 +16,43 @@ body {
   flex-direction: column;
   align-items: center;
 }
-
-/* 顶部时间显示（玻璃拟物） */
 #timeTogether {
-  font-size: 4rem;
-  font-weight: 800;
-  color: #ffd2e1;
-  text-align: center;
-  margin-top: 8vh;
-  padding: .5rem 1.25rem;
-  border-radius: 16px;
+  font-size: 4rem; font-weight: 800; color: #ffd2e1; text-align: center;
+  margin-top: 8vh; padding: .5rem 1.25rem; border-radius: 16px;
   backdrop-filter: blur(6px) saturate(1.2);
-  -webkit-backdrop-filter: blur(6px) saturate(1.2);
   background: linear-gradient(180deg, rgba(255, 128, 173, .14), rgba(255, 96, 144, .08));
   border: 1px solid rgba(255, 150, 180, .25);
-  box-shadow:
-    0 10px 30px rgba(255, 77, 109, .22),
-    inset 0 0 20px rgba(255, 255, 255, .08);
+  box-shadow: 0 10px 30px rgba(255, 77, 109, .22), inset 0 0 20px rgba(255, 255, 255, .08);
   text-shadow: 0 6px 24px rgba(255, 77, 109, .6);
 }
-
-/* 中间内容容器 */
-.middle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  flex: 1;
-  padding-top: 26vh;
-}
-
-/* 标题拟物光晕 */
+.middle { display: flex; flex-direction: column; align-items: center; flex: 1; padding-top: 26vh; }
 #question {
-  font-size: 5rem;
-  font-weight: 900;
-  color: #ff4d6d;
-  letter-spacing: 2px;
-  text-shadow:
-    0 10px 30px rgba(255, 77, 109, .45),
-    0 0 30px rgba(255, 180, 200, .55);
-  text-align: center;
-  margin-bottom: 4vh;
-  padding: 0 .5rem;
+  font-size: 5rem; font-weight: 900; color: #ff4d6d; letter-spacing: 2px;
+  text-shadow: 0 10px 30px rgba(255, 77, 109, .45), 0 0 30px rgba(255, 180, 200, .55);
+  text-align: center; margin-bottom: 4vh; padding: 0 .5rem;
 }
-
-/* 按钮组 */
 #buttons { text-align: center; }
-
-/* 拟物按钮 */
 .btn {
-  padding: 18px 40px;
-  font-size: 2rem;
-  border: none;
-  border-radius: 14px;
-  cursor: pointer;
-  margin: 15px;
-  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
-  will-change: transform;
-  user-select: none;
+  padding: 18px 40px; font-size: 2rem; border: none; border-radius: 14px; cursor: pointer;
+  margin: 15px; transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
 }
-
 #yes {
   background: radial-gradient(120% 120% at 70% 30%, #ff99ad, #ff4d6d 55%, #e91948 100%);
   color: #fff;
-  box-shadow:
-    0 12px 28px rgba(233, 25, 72, .36),
-    0 4px 10px rgba(233, 25, 72, .25),
-    inset 0 2px 18px rgba(255,255,255,.35);
-  text-shadow: 0 4px 18px rgba(255,255,255,.25);
+  box-shadow: 0 12px 28px rgba(233, 25, 72, .36), 0 4px 10px rgba(233, 25, 72, .25), inset 0 2px 18px rgba(255,255,255,.35);
 }
 #yes:hover { transform: translateY(-2px) scale(1.03); filter: brightness(1.05); }
-#yes:active { transform: translateY(0) scale(.99); filter: brightness(.98); }
-
 #no {
-  background: linear-gradient(180deg, #7a7a7a, #565656);
-  color: #fff;
-  box-shadow:
-    0 12px 24px rgba(0,0,0,.25),
-    inset 0 2px 18px rgba(255,255,255,.15);
+  background: linear-gradient(180deg, #7a7a7a, #565656); color: #fff;
+  box-shadow: 0 12px 24px rgba(0,0,0,.25), inset 0 2px 18px rgba(255,255,255,.15);
 }
-#no:hover { transform: translateY(-2px); filter: brightness(1.02); }
-#no:active { transform: translateY(0); filter: brightness(.98); }
-
-canvas#fireworks {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* 运动减少偏好 */
-@media (prefers-reduced-motion: reduce) {
-  #fireworks { display: none; }
-}
-
-/* 响应式 */
-@media (max-width: 1024px) {
-  #timeTogether { font-size: 3.2rem; margin-top: 6vh; }
-  #question { font-size: 4.2rem; }
-}
-@media (max-width: 768px) {
-  #timeTogether { font-size: 2.6rem; margin-top: 4vh; }
-  #question { font-size: 3.2rem; margin-bottom: 3vh; }
-  .btn { padding: 16px 28px; font-size: 1.6rem; }
-}
-@media (max-width: 480px) {
-  #timeTogether { font-size: 2.2rem; margin-top: 3vh; }
-  #question { font-size: 2.6rem; margin-bottom: 2.4vh; }
-  .btn { padding: 16px 26px; font-size: 1.5rem; }
-}
+canvas#fireworks { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 </style>
 </head>
 <body>
-<!-- 音频与 index.html 同级。BGM 进站即尝试播放；“愿意”音效仅点击时播放 -->
+<!-- 背景音乐：进站即自动播放 -->
 <audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
+<!-- 愿意按钮音乐：点击时播放 -->
 <audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
 <h1 id="timeTogether"></h1>
@@ -147,97 +68,39 @@ canvas#fireworks {
 <canvas id="fireworks"></canvas>
 
 <script>
-// 在一起时间
+// ========== 在一起时间 ==========
 const startDate = new Date("2024-06-28T00:00:00");
 const timeEl = document.getElementById("timeTogether");
 function updateTime() {
   const now = new Date();
   const diff = now - startDate;
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  const seconds = Math.floor((diff / 1000) % 60);
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff/ (1000*60*60)) % 24);
+  const minutes = Math.floor((diff/ (1000*60)) % 60);
+  const seconds = Math.floor((diff/1000) % 60);
   timeEl.innerText = `我们已经在一起 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
 }
 setInterval(updateTime, 1000);
 updateTime();
 
-// 按钮 & 音频
+// ========== 音频 ==========
 const yesBtn = document.getElementById("yes");
 const noBtn = document.getElementById("no");
 const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
-
 bgm.volume = 0.6;
-yesMusic.volume = 1.0;
 
-// 强力自动播放策略：
-// 1) 直接尝试播放
-// 2) 若被阻止，静音播放后立刻恢复音量
-// 3) 若仍被阻止，则绑定一次性解锁事件（任意用户交互均可，不限“愿意”按钮）
+// 自动播放 BGM（若浏览器阻止，则等待用户任意交互解锁）
 async function autoplayBGM() {
-  try {
-    bgm.muted = false;
-    await bgm.play();
-  } catch (e1) {
-    try {
-      bgm.muted = true;
-      await bgm.play();
-      setTimeout(() => { bgm.muted = false; bgm.volume = 0.6; }, 200);
-    } catch (e2) {
-      const unlock = async () => {
-        try { bgm.muted = false; bgm.volume = 0.6; await bgm.play(); } catch (_) {}
-        removeUnlockers();
-      };
-      function addUnlockers() {
-        // 任意交互，包括点击、触摸、键盘、滚轮、滚动、鼠标移动、获得焦点
-        const opts = { once: true, passive: true, capture: true };
-        window.addEventListener('pointerdown', unlock, opts);
-        window.addEventListener('pointerup', unlock, opts);
-        window.addEventListener('touchstart', unlock, opts);
-        window.addEventListener('touchend', unlock, opts);
-        window.addEventListener('click', unlock, opts);
-        window.addEventListener('keydown', unlock, { once: true, capture: true });
-        window.addEventListener('wheel', unlock, opts);
-        window.addEventListener('scroll', unlock, opts);
-        window.addEventListener('mousemove', unlock, opts);
-        window.addEventListener('focus', unlock, { once: true, capture: true });
-        // 微信/易信内置浏览器
-        document.addEventListener('WeixinJSBridgeReady', unlock, { once: true });
-        document.addEventListener('YixinJSBridgeReady', unlock, { once: true });
-        // 页面返回前台
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') unlock();
-        }, { once: true });
-        // 存到全局用于移除
-        window._bgmUnlockers = unlock;
-      }
-      function removeUnlockers() {
-        const u = window._bgmUnlockers;
-        if (!u) return;
-        window.removeEventListener('pointerdown', u, true);
-        window.removeEventListener('pointerup', u, true);
-        window.removeEventListener('touchstart', u, true);
-        window.removeEventListener('touchend', u, true);
-        window.removeEventListener('click', u, true);
-        window.removeEventListener('keydown', u, true);
-        window.removeEventListener('wheel', u, true);
-        window.removeEventListener('scroll', u, true);
-        window.removeEventListener('mousemove', u, true);
-        window.removeEventListener('focus', u, true);
-        document.removeEventListener('WeixinJSBridgeReady', u, true);
-        document.removeEventListener('YixinJSBridgeReady', u, true);
-        window._bgmUnlockers = null;
-      }
-      addUnlockers();
-    }
+  try { await bgm.play(); }
+  catch {
+    const unlock = async () => { try { await bgm.play(); } catch{} window.removeEventListener("click", unlock); };
+    window.addEventListener("click", unlock, { once:true });
   }
 }
-// DOM 就绪与页面加载时均尝试一次
-document.addEventListener('DOMContentLoaded', autoplayBGM);
-window.addEventListener('load', autoplayBGM);
+document.addEventListener("DOMContentLoaded", autoplayBGM);
 
-// “不要”缩小，“愿意”放大
+// 点击“不愿意”：按钮缩小/放大效果
 noBtn.addEventListener("click", () => {
   let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
   let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
@@ -245,304 +108,29 @@ noBtn.addEventListener("click", () => {
   noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
 });
 
-// 音量淡入淡出
-function fadeVolume(audio, target, duration = 300) {
-  const start = audio.volume;
-  const delta = target - start;
-  const t0 = performance.now();
-  const step = (now) => {
-    const t = Math.min(1, (now - t0) / duration);
-    audio.volume = Math.max(0, Math.min(1, start + delta * t));
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
-// 点击“愿意”：播放短音 + 触发烟花（不负责启动 BGM，BGM 已独立自动播放）
+// 点击“愿意”：播放短音 + 烟花
 yesBtn.addEventListener("click", () => {
-  fadeVolume(bgm, 0.25, 200);
   yesMusic.currentTime = 0;
   yesMusic.play().catch(()=>{});
-  yesMusic.onended = () => fadeVolume(bgm, 0.6, 400);
   celebratoryHearts();
 });
 
-/* =========================
-   高拟真烟花（仅“愿意”后触发，无黑烟）
-   ========================= */
+// ========== 简化版烟花动画（仅“愿意”后触发） ==========
 const canvas = document.getElementById("fireworks");
-const ctx = canvas.getContext("2d", { alpha: true });
-let DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+const ctx = canvas.getContext("2d");
 function resizeCanvas() {
-  DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
-  canvas.width = Math.floor(window.innerWidth * DPR);
-  canvas.height = Math.floor(window.innerHeight * DPR);
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.scale(DPR, DPR);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-const rand = (min, max) => Math.random() * (max - min) + min;
-const TAU = Math.PI * 2;
-const hsla = (h, s, l, a) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const mix = (a, b, t) => a + (b - a) * t;
-
-const palettes = [
-  { hues: [46, 50, 54], s: [88, 100], l: [55, 70], glitter: [55, 70] },
-  { hues: [330, 345, 355], s: [85, 100], l: [55, 70], glitter: [65, 80] },
-  { hues: [12, 18, 24], s: [85, 100], l: [55, 72], glitter: [65, 78] },
-  { hues: [180, 190, 200], s: [70, 95], l: [55, 72], glitter: [60, 75] },
-  { hues: [255, 270, 285], s: [70, 95], l: [55, 72], glitter: [60, 75] },
-  { hues: [135, 145, 155], s: [70, 95], l: [50, 68], glitter: [60, 76] },
-];
-function pickPalette() {
-  const p = palettes[Math.floor(Math.random() * palettes.length)];
-  const hue = p.hues[Math.floor(Math.random() * p.hues.length)];
-  const sat = Math.floor(rand(p.s[0], p.s[1]));
-  const lig = Math.floor(rand(p.l[0], p.l[1]));
-  return { hue, sat, lig, glitter: Math.floor(rand(p.glitter[0], p.glitter[1])) };
-}
-
-const Physics = { gravity: 240, airDrag: 0.992, rocketDrag: 0.998, windStrength: 4 };
-
-const particles = [];
-const rockets = [];
-const shockwaves = [];
-
-// 粒子
-class Particle {
-  constructor(o) {
-    Object.assign(this, {
-      x: o.x, y: o.y, vx: o.vx, vy: o.vy,
-      size: o.size ?? rand(1.2, 2.4),
-      ttl: o.ttl ?? rand(0.9, 1.9),
-      life: 0,
-      color: o.color ?? pickPalette(),
-      alpha: 1,
-      glitter: o.glitter ?? Math.random() < 0.45,
-      twinkle: Math.random() < 0.35,
-      heavy: !!o.heavy,
-      trail: [],
-      maxTrail: o.heavy ? 10 : 6,
-      bokeh: Math.random() < 0.12
-    });
-  }
-  update(dt, windT) {
-    this.trail.push([this.x, this.y]);
-    if (this.trail.length > this.maxTrail) this.trail.shift();
-    const wind = Math.sin(windT + this.y * 0.002) * (this.heavy ? Physics.windStrength * 0.2 : Physics.windStrength);
-    this.vx += wind * dt;
-    this.vy += Physics.gravity * dt * (this.heavy ? 1.1 : 1);
-    this.vx *= Physics.airDrag; this.vy *= Physics.airDrag;
-    this.x += this.vx * dt; this.y += this.vy * dt;
-    this.life += dt;
-    this.alpha = 1 - (this.life / this.ttl);
-    if (this.twinkle) {
-      this.alpha *= 0.7 + Math.sin(this.life * 40 + this.x * 0.05) * 0.3;
-      this.alpha = clamp(this.alpha, 0, 1);
-    }
-    return this.life < this.ttl && this.alpha > 0.02;
-  }
-  draw(ctx) {
-    const { hue, sat, lig } = this.color;
-    const core = hsla(hue, sat, lig + 10, clamp(this.alpha, 0, 1));
-    const glow = hsla(hue, sat, 60, clamp(this.alpha * 0.3, 0, 0.6));
-    if (this.trail.length > 1) {
-      ctx.lineWidth = this.heavy ? 2 : 1.25;
-      ctx.strokeStyle = glow;
-      ctx.beginPath();
-      ctx.moveTo(this.trail[0][0], this.trail[0][1]);
-      for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
-      ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.fillStyle = core;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = glow;
-    ctx.arc(this.x, this.y, this.bokeh ? this.size * 1.8 : this.size, 0, TAU);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    if (this.glitter && Math.random() < 0.6) {
-      ctx.globalAlpha = clamp(this.alpha * 0.8, 0, 1);
-      ctx.fillStyle = hsla(hue, 100, 90, 0.9);
-      ctx.fillRect(this.x + rand(-0.7, 0.7), this.y + rand(-0.7, 0.7), 1.2, 1.2);
-      ctx.globalAlpha = 1;
-    }
-  }
-}
-
-// 冲击波
-class Shockwave {
-  constructor(x, y, color) { this.x = x; this.y = y; this.r = 0; this.ttl = rand(0.35, 0.6); this.life = 0; this.color = color; }
-  update(dt) { this.life += dt; this.r += 200 * dt; return this.life < this.ttl; }
-  draw(ctx) {
-    const t = 1 - (this.life / this.ttl);
-    ctx.lineWidth = mix(3.5, 0.3, 1 - t);
-    ctx.strokeStyle = hsla(this.color.hue, this.color.sat, mix(72, 58, 1 - t), Math.max(0, Math.min(0.8, t * 0.8)));
-    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.stroke();
-  }
-}
-
-// 火箭
-class Rocket {
-  constructor(x, y, vx, vy, pal, forceType) {
-    Object.assign(this, { x, y, vx, vy, ttl: rand(1.0, 1.9), life: 0, palette: pal || pickPalette(), forceType: forceType || null, trail: [] });
-  }
-  update(dt, windT) {
-    this.trail.push([this.x, this.y]); if (this.trail.length > 14) this.trail.shift();
-    const wind = Math.sin(windT + this.y * 0.0015) * (Physics.windStrength * 0.5);
-    this.vx += wind * dt; this.vy += Physics.gravity * 0.85 * dt;
-    this.vx *= Physics.rocketDrag; this.vy *= Physics.rocketDrag;
-    this.x += this.vx * dt; this.y += this.vy * dt; this.life += dt;
-    const explodeTop = this.y < innerHeight * 0.10;
-    const explodeApex = this.vy > 20;
-    const explodeTimeout = this.life > this.ttl + 0.3;
-    return !(explodeTop || explodeApex || explodeTimeout);
-  }
-  draw(ctx) {
-    const head = hsla(this.palette.hue, this.palette.sat, 70, 1);
-    const glow = hsla(this.palette.hue, this.palette.sat, 60, 0.5);
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.beginPath(); ctx.shadowBlur = 24; ctx.shadowColor = glow; ctx.fillStyle = head;
-    ctx.arc(this.x, this.y, 2.4, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
-    if (this.trail.length > 1) {
-      ctx.lineWidth = 2.2;
-      const g = ctx.createLinearGradient(this.trail[0][0], this.trail[0][1], this.x, this.y);
-      g.addColorStop(0, hsla(this.palette.hue, this.palette.sat, 60, 0));
-      g.addColorStop(1, hsla(this.palette.hue, this.palette.sat, 70, 0.9));
-      ctx.strokeStyle = g; ctx.beginPath();
-      ctx.moveTo(this.trail[0][0], this.trail[0][1]);
-      for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i][0], this.trail[i][1]);
-      ctx.stroke();
-    }
-  }
-}
-
-// 爆炸图案
-function explodePattern(type, cx, cy, palette) {
-  const speed = Math.random() * (340 - 180) + 180;
-  const count = Math.floor(Math.random() * (240 - 140) + 140);
-  const heavyChance = type === 'willow' ? 0.7 : 0.25;
-  const push = (vx, vy, heavy=false) => particles.push(new Particle({
-    x: cx, y: cy, vx, vy,
-    size: heavy ? Math.random() * (2.8 - 1.6) + 1.6 : Math.random() * (2.0 - 1.2) + 1.2,
-    ttl: heavy ? Math.random() * (2.6 - 1.6) + 1.6 : Math.random() * (1.9 - 1.1) + 1.1,
-    color: palette, heavy
-  }));
-  switch (type) {
-    case 'ring': {
-      const rings = Math.random() < 0.5 ? 1 : 2;
-      for (let r = 0; r < rings; r++) {
-        const scale = r === 0 ? 1 : 0.62;
-        for (let i = 0; i < count; i++) {
-          const a = (i / count) * TAU;
-          push(Math.cos(a)*speed*scale, Math.sin(a)*speed*scale, Math.random()<heavyChance);
-        }
-      } break;
-    }
-    case 'heart': {
-      const n = Math.max(200, count), s = Math.random() * (12 - 8) + 8;
-      for (let i = 0; i < n; i++) {
-        const t = (i / n) * TAU;
-        const x = 16*Math.pow(Math.sin(t),3);
-        const y = 13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
-        const nx = x*s, ny = -y*s, len = Math.hypot(nx, ny)||1;
-        push((nx/len)*speed, (ny/len)*speed, Math.random()<0.2);
-      } break;
-    }
-    case 'willow': {
-      const n = count * 1.1;
-      for (let i = 0; i < n; i++) {
-        const a = Math.random()*TAU, k = Math.pow(Math.random(), 0.25);
-        push(Math.cos(a)*speed*k*0.85, Math.sin(a)*speed*k*0.6 - (Math.random()*(60-30)+30), true);
-      } break;
-    }
-    case 'chrysanthemum': {
-      const petals = Math.floor(Math.random() * (11 - 6) + 6);
-      for (let i = 0; i < count; i++) {
-        const a = Math.random()*TAU, r = (Math.sin(petals*a)+1)*0.5;
-        push(Math.cos(a)*speed*(0.6+0.5*r), Math.sin(a)*speed*(0.6+0.5*r), Math.random()<heavyChance);
-      } break;
-    }
-    default: {
-      for (let i = 0; i < count; i++) {
-        const a = Math.random()*TAU, k = Math.pow(Math.random(), 0.8);
-        push(Math.cos(a)*speed*k, Math.sin(a)*speed*k, Math.random()<heavyChance);
-      }
-    }
-  }
-  shockwaves.push(new Shockwave(cx, cy, palette));
-  for (let i = 0; i < 20; i++)
-    particles.push(new Particle({ x: cx, y: cy, vx: Math.random()*80-40, vy: Math.random()*80-40, size: Math.random()*(2.2-1.4)+1.4, ttl: Math.random()*(1.0-0.5)+0.5, color: palette, glitter: true }));
-}
-function explodeAt(x, y, palette, forceType) {
-  const r = Math.random();
-  const type = forceType || (r < 0.18 ? 'ring' : r < 0.38 ? 'chrysanthemum' : r < 0.65 ? 'peony' : r < 0.88 ? 'willow' : 'heart');
-  explodePattern(type, x, y, palette || pickPalette());
-}
-function launchRocket(x, strength=1, palette, forceType) {
-  const baseX = x ?? (Math.random() * (innerWidth * 0.85 - innerWidth * 0.15) + innerWidth * 0.15);
-  const speed = (Math.random() * (580 - 420) + 420) * strength;
-  const angle = Math.random() * (Math.PI*0.06 - -Math.PI*0.06) + -Math.PI*0.06;
-  const vx = Math.sin(angle) * (speed * 0.20);
-  const vy = -Math.cos(angle) * speed;
-  rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
-}
-/* 点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
-  const cols = 5;
-  const palHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 };
-  const spacing = innerWidth / (cols + 1);
-  let delay = 0;
-  for (let i = 1; i <= cols; i++) {
-    setTimeout(() => launchRocket(spacing * i, 1.25, palHeart, 'heart'), delay);
-    delay += 160;
-  }
-  for (let i = 0; i < 6; i++) {
-    setTimeout(() => {
-      const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
-      launchRocket(Math.random() * (innerWidth*0.8 - innerWidth*0.2) + innerWidth*0.2, Math.random() * (1.35 - 1.15) + 1.15, pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
-    }, delay + i * 140);
-  }
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "rgba(255,0,100,0.6)";
+  ctx.font = "80px serif";
+  ctx.fillText("💖", canvas.width/2-40, canvas.height/2);
 }
-
-// 动画循环（无自动烟花）
-let windT = 0, last = performance.now();
-function frame(now) {
-  const dt = Math.min(0.033, (now - last) / 1000); last = now; windT += dt * 0.8;
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
-  ctx.fillRect(0, 0, innerWidth, innerHeight);
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = rockets.length - 1; i >= 0; i--) {
-    const r = rockets[i];
-    const alive = r.update(dt, windT);
-    r.draw(ctx);
-    if (!alive) { explodeAt(r.x, r.y, r.palette, r.forceType); rockets.splice(i, 1); }
-  }
-  const targetMax = innerWidth < 600 ? 900 : 1400;
-  if (particles.length > targetMax) particles.splice(0, particles.length - targetMax);
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    if (!p.update(dt, windT)) { particles.splice(i, 1); continue; }
-    p.draw(ctx);
-    if (Math.random() < 0.05 && p.alpha > 0.6) {
-      ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.fillRect(p.x + (Math.random()*2-1), p.y + (Math.random()*2-1), 1, 1);
-    }
-  }
-  for (let i = shockwaves.length - 1; i >= 0; i--) {
-    const s = shockwaves[i];
-    if (!s.update(dt)) shockwaves.splice(i, 1);
-    else s.draw(ctx);
-  }
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
 </script>
 </body>
 </html>
