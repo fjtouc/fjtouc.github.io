@@ -130,8 +130,9 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<!-- 音频与 index.html 同级。BGM 进站即尝试播放；“愿意”音效仅点击时播放 -->
-<audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
+<!-- 关键点：以 muted 自动播放，然后在脚本里尽可能早地取消静音。
+     这在大多数 Chromium 浏览器上可实现“无交互直接出声”。iOS Safari 可能仍受限。 -->
+<audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop muted playsinline></audio>
 <audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
 <h1 id="timeTogether"></h1>
@@ -171,71 +172,31 @@ const yesMusic = document.getElementById("yesMusic");
 bgm.volume = 0.6;
 yesMusic.volume = 1.0;
 
-// 强力自动播放策略：
-// 1) 直接尝试播放
-// 2) 若被阻止，静音播放后立刻恢复音量
-// 3) 若仍被阻止，则绑定一次性解锁事件（任意用户交互均可，不限“愿意”按钮）
-async function autoplayBGM() {
-  try {
-    bgm.muted = false;
-    await bgm.play();
-  } catch (e1) {
-    try {
-      bgm.muted = true;
-      await bgm.play();
-      setTimeout(() => { bgm.muted = false; bgm.volume = 0.6; }, 200);
-    } catch (e2) {
-      const unlock = async () => {
-        try { bgm.muted = false; bgm.volume = 0.6; await bgm.play(); } catch (_) {}
-        removeUnlockers();
-      };
-      function addUnlockers() {
-        // 任意交互，包括点击、触摸、键盘、滚轮、滚动、鼠标移动、获得焦点
-        const opts = { once: true, passive: true, capture: true };
-        window.addEventListener('pointerdown', unlock, opts);
-        window.addEventListener('pointerup', unlock, opts);
-        window.addEventListener('touchstart', unlock, opts);
-        window.addEventListener('touchend', unlock, opts);
-        window.addEventListener('click', unlock, opts);
-        window.addEventListener('keydown', unlock, { once: true, capture: true });
-        window.addEventListener('wheel', unlock, opts);
-        window.addEventListener('scroll', unlock, opts);
-        window.addEventListener('mousemove', unlock, opts);
-        window.addEventListener('focus', unlock, { once: true, capture: true });
-        // 微信/易信内置浏览器
-        document.addEventListener('WeixinJSBridgeReady', unlock, { once: true });
-        document.addEventListener('YixinJSBridgeReady', unlock, { once: true });
-        // 页面返回前台
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') unlock();
-        }, { once: true });
-        // 存到全局用于移除
-        window._bgmUnlockers = unlock;
-      }
-      function removeUnlockers() {
-        const u = window._bgmUnlockers;
-        if (!u) return;
-        window.removeEventListener('pointerdown', u, true);
-        window.removeEventListener('pointerup', u, true);
-        window.removeEventListener('touchstart', u, true);
-        window.removeEventListener('touchend', u, true);
-        window.removeEventListener('click', u, true);
-        window.removeEventListener('keydown', u, true);
-        window.removeEventListener('wheel', u, true);
-        window.removeEventListener('scroll', u, true);
-        window.removeEventListener('mousemove', u, true);
-        window.removeEventListener('focus', u, true);
-        document.removeEventListener('WeixinJSBridgeReady', u, true);
-        document.removeEventListener('YixinJSBridgeReady', u, true);
-        window._bgmUnlockers = null;
-      }
-      addUnlockers();
+/* 无交互自动播放策略（尽最大可能）：
+   1) audio 元素一开始带 muted + autoplay + loop
+   2) 页面就绪后反复尝试取消静音（多数桌面/安卓 Chrome 系列可直接出声）
+   3) 若某些平台仍禁止（如 iOS Safari/微信内核），将保持静音，直到用户任何自然交互才会真正出声（本脚本不绑定按钮，不弹提示） */
+function tryStartBGM() {
+  if (!bgm) return;
+  // 确保在播放（muted 状态下几乎总能成功）
+  bgm.play().catch(()=>{});
+  // 多次尝试去掉静音
+  const unmute = () => { bgm.muted = false; bgm.volume = 0.6; };
+  setTimeout(unmute, 200);
+  setTimeout(unmute, 1000);
+  setTimeout(unmute, 3000);
+  // 间隔重试，尽量覆盖 WebView/慢加载场景
+  const retry = setInterval(() => {
+    if (!bgm.paused) {
+      bgm.muted = false;
+      bgm.volume = 0.6;
+      // 若已经可听见，可停止重试（无法程序判断是否可听，保留3次后停止）
     }
-  }
+  }, 5000);
+  setTimeout(() => clearInterval(retry), 16000);
 }
-// DOM 就绪与页面加载时均尝试一次
-document.addEventListener('DOMContentLoaded', autoplayBGM);
-window.addEventListener('load', autoplayBGM);
+document.addEventListener('DOMContentLoaded', tryStartBGM);
+window.addEventListener('load', tryStartBGM);
 
 // “不要”缩小，“愿意”放大
 noBtn.addEventListener("click", () => {
@@ -258,7 +219,7 @@ function fadeVolume(audio, target, duration = 300) {
   requestAnimationFrame(step);
 }
 
-// 点击“愿意”：播放短音 + 触发烟花（不负责启动 BGM，BGM 已独立自动播放）
+// 点击“愿意”：播放短音 + 触发烟花（不负责启动 BGM）
 yesBtn.addEventListener("click", () => {
   fadeVolume(bgm, 0.25, 200);
   yesMusic.currentTime = 0;
@@ -486,7 +447,7 @@ function explodeAt(x, y, palette, forceType) {
 }
 function launchRocket(x, strength=1, palette, forceType) {
   const baseX = x ?? (Math.random() * (innerWidth * 0.85 - innerWidth * 0.15) + innerWidth * 0.15);
-  const speed = (Math.random() * (580 - 420) + 420) * strength;
+  const speed = (Math.random() * (580 - 420) + 420) * strength; // 升更高
   const angle = Math.random() * (Math.PI*0.06 - -Math.PI*0.06) + -Math.PI*0.06;
   const vx = Math.sin(angle) * (speed * 0.20);
   const vy = -Math.cos(angle) * speed;
