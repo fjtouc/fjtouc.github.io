@@ -130,7 +130,7 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<!-- 与 index.html 同级 -->
+<!-- 音频与 index.html 同级。BGM 进站即尝试播放；“愿意”音效仅点击时播放 -->
 <audio id="bgm" src="zshyn.mp3" preload="auto" autoplay loop playsinline></audio>
 <audio id="yesMusic" src="yyzyq.mp3" preload="auto" playsinline></audio>
 
@@ -168,12 +168,85 @@ const noBtn = document.getElementById("no");
 const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
 
-// 默认音量
 bgm.volume = 0.6;
 yesMusic.volume = 1.0;
 
-// 修改后的 autoplayBGM：不使用任何交互解锁，纯自动策略（静音起播 -> 快速淡入音量），并定时重试
-function fadeVolume(audio, target, duration = 600) {
+// 强力自动播放策略：
+// 1) 直接尝试播放
+// 2) 若被阻止，静音播放后立刻恢复音量
+// 3) 若仍被阻止，则绑定一次性解锁事件（任意用户交互均可，不限“愿意”按钮）
+async function autoplayBGM() {
+  try {
+    bgm.muted = false;
+    await bgm.play();
+  } catch (e1) {
+    try {
+      bgm.muted = true;
+      await bgm.play();
+      setTimeout(() => { bgm.muted = false; bgm.volume = 0.6; }, 200);
+    } catch (e2) {
+      const unlock = async () => {
+        try { bgm.muted = false; bgm.volume = 0.6; await bgm.play(); } catch (_) {}
+        removeUnlockers();
+      };
+      function addUnlockers() {
+        // 任意交互，包括点击、触摸、键盘、滚轮、滚动、鼠标移动、获得焦点
+        const opts = { once: true, passive: true, capture: true };
+        window.addEventListener('pointerdown', unlock, opts);
+        window.addEventListener('pointerup', unlock, opts);
+        window.addEventListener('touchstart', unlock, opts);
+        window.addEventListener('touchend', unlock, opts);
+        window.addEventListener('click', unlock, opts);
+        window.addEventListener('keydown', unlock, { once: true, capture: true });
+        window.addEventListener('wheel', unlock, opts);
+        window.addEventListener('scroll', unlock, opts);
+        window.addEventListener('mousemove', unlock, opts);
+        window.addEventListener('focus', unlock, { once: true, capture: true });
+        // 微信/易信内置浏览器
+        document.addEventListener('WeixinJSBridgeReady', unlock, { once: true });
+        document.addEventListener('YixinJSBridgeReady', unlock, { once: true });
+        // 页面返回前台
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') unlock();
+        }, { once: true });
+        // 存到全局用于移除
+        window._bgmUnlockers = unlock;
+      }
+      function removeUnlockers() {
+        const u = window._bgmUnlockers;
+        if (!u) return;
+        window.removeEventListener('pointerdown', u, true);
+        window.removeEventListener('pointerup', u, true);
+        window.removeEventListener('touchstart', u, true);
+        window.removeEventListener('touchend', u, true);
+        window.removeEventListener('click', u, true);
+        window.removeEventListener('keydown', u, true);
+        window.removeEventListener('wheel', u, true);
+        window.removeEventListener('scroll', u, true);
+        window.removeEventListener('mousemove', u, true);
+        window.removeEventListener('focus', u, true);
+        document.removeEventListener('WeixinJSBridgeReady', u, true);
+        document.removeEventListener('YixinJSBridgeReady', u, true);
+        window._bgmUnlockers = null;
+      }
+      addUnlockers();
+    }
+  }
+}
+// DOM 就绪与页面加载时均尝试一次
+document.addEventListener('DOMContentLoaded', autoplayBGM);
+window.addEventListener('load', autoplayBGM);
+
+// “不要”缩小，“愿意”放大
+noBtn.addEventListener("click", () => {
+  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
+  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
+  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
+  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
+});
+
+// 音量淡入淡出
+function fadeVolume(audio, target, duration = 300) {
   const start = audio.volume;
   const delta = target - start;
   const t0 = performance.now();
@@ -185,69 +258,7 @@ function fadeVolume(audio, target, duration = 600) {
   requestAnimationFrame(step);
 }
 
-function autoplayBGM() {
-  const a = bgm;
-  let retryTimer = null;
-  let tries = 0;
-
-  const tryPlay = async () => {
-    tries++;
-    // 先静音起播，提高自动播放成功率
-    a.muted = true;
-    a.volume = 0.0;
-
-    try {
-      await a.play();
-      // 起播成功后，迅速解除静音并淡入到目标音量
-      setTimeout(() => {
-        a.muted = false;
-        fadeVolume(a, 0.6, 800);
-      }, 120);
-
-      if (retryTimer) { clearInterval(retryTimer); retryTimer = null; }
-    } catch (e) {
-      // 若失败，不依赖任何用户事件，只做定时重试
-      if (!retryTimer) {
-        retryTimer = setInterval(async () => {
-          if (!a.paused) { clearInterval(retryTimer); retryTimer = null; return; }
-          // 每次重试前确保处于静音
-          a.muted = true;
-          a.volume = 0.0;
-          try {
-            await a.play();
-            setTimeout(() => {
-              a.muted = false;
-              fadeVolume(a, 0.6, 800);
-            }, 120);
-            clearInterval(retryTimer);
-            retryTimer = null;
-          } catch (_) {}
-        }, 1500);
-      }
-    }
-  };
-
-  // 多次在不同生命周期节点发起尝试（均不绑定交互事件）
-  tryPlay();
-  document.addEventListener('DOMContentLoaded', tryPlay, { once: true });
-  window.addEventListener('load', tryPlay, { once: true });
-  window.addEventListener('pageshow', tryPlay, { once: true });
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && a.paused) tryPlay();
-  });
-  window.addEventListener('focus', () => { if (a.paused) tryPlay(); });
-}
-autoplayBGM();
-
-// “不要”缩小，“愿意”放大
-noBtn.addEventListener("click", () => {
-  let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-  let noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-  yesBtn.style.fontSize = (yesSize * 1.18) + "px";
-  noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
-});
-
-// 点击“愿意”：播放短音 + 触发烟花（不再触发 BGM）
+// 点击“愿意”：播放短音 + 触发烟花（不负责启动 BGM，BGM 已独立自动播放）
 yesBtn.addEventListener("click", () => {
   fadeVolume(bgm, 0.25, 200);
   yesMusic.currentTime = 0;
@@ -468,34 +479,29 @@ function explodePattern(type, cx, cy, palette) {
   for (let i = 0; i < 20; i++)
     particles.push(new Particle({ x: cx, y: cy, vx: Math.random()*80-40, vy: Math.random()*80-40, size: Math.random()*(2.2-1.4)+1.4, ttl: Math.random()*(1.0-0.5)+0.5, color: palette, glitter: true }));
 }
-
 function explodeAt(x, y, palette, forceType) {
   const r = Math.random();
   const type = forceType || (r < 0.18 ? 'ring' : r < 0.38 ? 'chrysanthemum' : r < 0.65 ? 'peony' : r < 0.88 ? 'willow' : 'heart');
   explodePattern(type, x, y, palette || pickPalette());
 }
-
 function launchRocket(x, strength=1, palette, forceType) {
   const baseX = x ?? (Math.random() * (innerWidth * 0.85 - innerWidth * 0.15) + innerWidth * 0.15);
-  const speed = (Math.random() * (580 - 420) + 420) * strength; // 升更高
+  const speed = (Math.random() * (580 - 420) + 420) * strength;
   const angle = Math.random() * (Math.PI*0.06 - -Math.PI*0.06) + -Math.PI*0.06;
   const vx = Math.sin(angle) * (speed * 0.20);
   const vy = -Math.cos(angle) * speed;
   rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
-
 /* 点击“愿意”后触发的礼花阵列（顶端爱心为主） */
 function celebratoryHearts() {
   const cols = 5;
   const palHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 };
   const spacing = innerWidth / (cols + 1);
   let delay = 0;
-
   for (let i = 1; i <= cols; i++) {
     setTimeout(() => launchRocket(spacing * i, 1.25, palHeart, 'heart'), delay);
     delay += 160;
   }
-
   for (let i = 0; i < 6; i++) {
     setTimeout(() => {
       const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
@@ -505,28 +511,21 @@ function celebratoryHearts() {
 }
 
 // 动画循环（无自动烟花）
-const canvas = document.getElementById("fireworks");
-const ctx = canvas.getContext("2d", { alpha: true });
 let windT = 0, last = performance.now();
 function frame(now) {
   const dt = Math.min(0.033, (now - last) / 1000); last = now; windT += dt * 0.8;
-
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.fillRect(0, 0, innerWidth, innerHeight);
-
   ctx.globalCompositeOperation = 'lighter';
-
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i];
     const alive = r.update(dt, windT);
     r.draw(ctx);
     if (!alive) { explodeAt(r.x, r.y, r.palette, r.forceType); rockets.splice(i, 1); }
   }
-
   const targetMax = innerWidth < 600 ? 900 : 1400;
   if (particles.length > targetMax) particles.splice(0, particles.length - targetMax);
-
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     if (!p.update(dt, windT)) { particles.splice(i, 1); continue; }
@@ -536,13 +535,11 @@ function frame(now) {
       ctx.fillRect(p.x + (Math.random()*2-1), p.y + (Math.random()*2-1), 1, 1);
     }
   }
-
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const s = shockwaves[i];
     if (!s.update(dt)) shockwaves.splice(i, 1);
     else s.draw(ctx);
   }
-
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
