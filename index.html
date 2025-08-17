@@ -17,7 +17,7 @@ body {
   align-items: center;
 }
 
-/* 顶部时间显示（略带玻璃拟物外观） */
+/* 顶部时间显示（玻璃拟物） */
 #timeTogether {
   font-size: 4rem;
   font-weight: 800;
@@ -64,7 +64,7 @@ body {
 /* 按钮组 */
 #buttons { text-align: center; }
 
-/* 按钮拟物质感与动效 */
+/* 拟物按钮 */
 .btn {
   padding: 18px 40px;
   font-size: 2rem;
@@ -131,10 +131,13 @@ canvas#fireworks {
 </style>
 </head>
 <body>
-<audio id="bgm" autoplay loop>
+<!-- 说明：
+1) 浏览器限制自动播放，已在脚本中通过用户首次交互解锁并播放。
+2) 点击“愿意”将同时播放短音乐，且会轻微压低背景音乐音量，结束后恢复。 -->
+<audio id="bgm" preload="auto" loop playsinline>
   <source src="data/zshyn.mp3" type="audio/mpeg" />
 </audio>
-<audio id="yesMusic">
+<audio id="yesMusic" preload="auto" playsinline>
   <source src="data/yyzyq.mp3" type="audio/mpeg" />
 </audio>
 
@@ -169,11 +172,24 @@ setInterval(updateTime, 1000);
 updateTime();
 
 /* =========================
-   按钮交互
+   按钮交互与音频控制
    ========================= */
 const yesBtn = document.getElementById("yes");
 const noBtn = document.getElementById("no");
+const bgm = document.getElementById("bgm");
 const yesMusic = document.getElementById("yesMusic");
+
+bgm.volume = 0.6;
+yesMusic.volume = 1.0;
+
+// 首次用户交互时尝试播放背景音乐（解决自动播放限制）
+const unlockAudio = () => {
+  if (bgm.paused) bgm.play().catch(()=>{});
+  document.removeEventListener('pointerdown', unlockAudio);
+  document.removeEventListener('touchstart', unlockAudio);
+};
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 noBtn.addEventListener("click", () => {
   let yesSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
@@ -182,24 +198,37 @@ noBtn.addEventListener("click", () => {
   noBtn.style.fontSize = (Math.max(12, noSize * 0.82)) + "px";
 });
 
-// 当用户交互时确保背景音乐可播放（部分浏览器限制自动播放）
-document.addEventListener('click', () => {
-  const bgm = document.getElementById('bgm');
-  if (bgm && bgm.paused) {
-    bgm.play().catch(()=>{});
-  }
-}, { once: true });
+// 简单音量淡入淡出
+function fadeVolume(audio, target, duration = 300) {
+  const start = audio.volume;
+  const change = target - start;
+  const t0 = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - t0) / duration);
+    audio.volume = Math.max(0, Math.min(1, start + change * t));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 
 yesBtn.addEventListener("click", () => {
+  // 确保背景音乐已解锁并播放
+  if (bgm.paused) bgm.play().catch(()=>{});
+  // “愿意”短音乐播放，压低BGM再恢复
   try {
+    fadeVolume(bgm, 0.25, 200);
     yesMusic.currentTime = 0;
     yesMusic.play().catch(()=>{});
+    yesMusic.onended = () => fadeVolume(bgm, 0.6, 400);
   } catch(e) {}
+
+  // 仅在点击“愿意”时触发烟花
   celebratoryHearts();
 });
 
 /* =========================
-   拟物烟花引擎（高拟真/高颜值）
+   拟物烟花引擎（高颜值，无黑烟）
+   注：已移除黑烟效果，仅保留光晕、冲击波与拖尾
    ========================= */
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d", { alpha: true });
@@ -219,7 +248,6 @@ resizeCanvas();
 // 工具
 const rand = (min, max) => Math.random() * (max - min) + min;
 const TAU = Math.PI * 2;
-function hsl(h, s, l) { return `hsl(${h}, ${s}%, ${l}%)`; }
 function hsla(h, s, l, a) { return `hsla(${h}, ${s}%, ${l}%, ${a})`; }
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function mix(a, b, t) { return a + (b - a) * t; }
@@ -248,13 +276,12 @@ const Physics = {
   windStrength: 4,       // 微风强度
 };
 
-// 粒子池
+// 容器
 const particles = [];
 const rockets = [];
 const shockwaves = [];
-const smokes = [];
 
-// 粒子类（爆炸/流星/萤火）
+// 粒子
 class Particle {
   constructor(opts) {
     this.x = opts.x; this.y = opts.y;
@@ -273,11 +300,11 @@ class Particle {
     this.bokeh = Math.random() < 0.12;
   }
   update(dt, windT) {
-    // 记录轨迹（用于拖尾）
+    // 轨迹
     this.trail.push([this.x, this.y]);
     if (this.trail.length > this.maxTrail) this.trail.shift();
 
-    // 受力
+    // 力
     const wind = Math.sin(windT + this.y * 0.002) * (this.heavy ? Physics.windStrength * 0.2 : Physics.windStrength);
     this.vx += wind * dt;
     this.vy += Physics.gravity * dt * (this.heavy ? 1.1 : 1);
@@ -297,11 +324,9 @@ class Particle {
       this.alpha *= 0.7 + Math.sin(this.life * 40 + this.x * 0.05) * 0.3;
       this.alpha = clamp(this.alpha, 0, 1);
     }
-
     return this.life < this.ttl && this.alpha > 0.02;
   }
   draw(ctx) {
-    // 光晕（使用 lighter 合成）
     const { hue, sat, lig } = this.color;
     const core = hsla(hue, sat, lig + 10, clamp(this.alpha, 0, 1));
     const glow = hsla(hue, sat, 60, clamp(this.alpha * 0.3, 0, 0.6));
@@ -320,7 +345,7 @@ class Particle {
       ctx.stroke();
     }
 
-    // 粒子主体
+    // 主体
     ctx.beginPath();
     ctx.fillStyle = core;
     ctx.shadowBlur = 18;
@@ -329,7 +354,7 @@ class Particle {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // 闪烁亮片
+    // 闪亮碎钻
     if (this.glitter && Math.random() < 0.6) {
       ctx.globalAlpha = clamp(this.alpha * 0.8, 0, 1);
       ctx.fillStyle = hsla(hue, 100, 90, 0.9);
@@ -356,53 +381,22 @@ class Shockwave {
   draw(ctx) {
     const t = 1 - (this.life / this.ttl);
     ctx.lineWidth = mix(3.5, 0.3, 1 - t);
-    ctx.strokeStyle = hsla(this.color.hue, this.color.sat, mix(72, 58, 1 - t), clamp(t * 0.8, 0, 0.8));
+    ctx.strokeStyle = hsla(this.color.hue, this.color.sat, mix(72, 58, 1 - t), Math.max(0, Math.min(0.8, t * 0.8)));
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.r, 0, TAU);
     ctx.stroke();
   }
 }
 
-// 烟雾
-class Smoke {
-  constructor(x, y) {
-    this.x = x + rand(-6, 6);
-    this.y = y + rand(-6, 6);
-    this.r = rand(8, 18);
-    this.ttl = rand(1.2, 2.2);
-    this.life = 0;
-    this.alpha = 0.45;
-    this.vx = rand(-6, 6);
-    this.vy = rand(-22, -6);
-  }
-  update(dt) {
-    this.life += dt;
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.vx *= 0.995;
-    this.vy *= 0.995;
-    this.alpha = clamp(0.45 * (1 - this.life / this.ttl), 0, 0.45);
-    return this.life < this.ttl && this.alpha > 0.02;
-  }
-  draw(ctx) {
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.beginPath();
-    ctx.fillStyle = `rgba(80,80,80,${this.alpha})`;
-    ctx.filter = 'blur(2px)';
-    ctx.arc(this.x, this.y, this.r, 0, TAU);
-    ctx.fill();
-    ctx.filter = 'none';
-  }
-}
-
 // 火箭
 class Rocket {
-  constructor(x, y, vx, vy, palette) {
+  constructor(x, y, vx, vy, palette, forceType) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
     this.ttl = rand(0.9, 1.8);
     this.life = 0;
     this.palette = palette || pickPalette();
+    this.forceType = forceType || null;
     this.trail = [];
   }
   update(dt, windT) {
@@ -424,12 +418,7 @@ class Rocket {
     this.y += this.vy * dt;
     this.life += dt;
 
-    // 尾烟
-    if (Math.random() < 0.8) {
-      smokes.push(new Smoke(this.x, this.y));
-    }
-
-    // 爆炸条件：达到顶点或者寿命到期或者速度变正向（开始下落）
+    // 爆炸条件：达到顶点/寿命到期/开始下落
     const explode = (this.vy > -10) || (this.life > this.ttl) || (this.y < innerHeight * 0.22);
     return !explode;
   }
@@ -487,9 +476,7 @@ function explodePattern(type, cx, cy, palette) {
         const radiusScale = r === 0 ? 1 : 0.62;
         for (let i = 0; i < count; i++) {
           const a = (i / count) * TAU;
-          const vx = Math.cos(a) * speed * radiusScale;
-          const vy = Math.sin(a) * speed * radiusScale;
-          pushParticle(vx, vy, Math.random() < heavyChance);
+          pushParticle(Math.cos(a) * speed * radiusScale, Math.sin(a) * speed * radiusScale, Math.random() < heavyChance);
         }
       }
       break;
@@ -536,16 +523,14 @@ function explodePattern(type, cx, cy, palette) {
       for (let i = 0; i < count; i++) {
         const a = Math.random() * TAU;
         const k = Math.pow(Math.random(), 0.8);
-        const vx = Math.cos(a) * speed * k;
-        const vy = Math.sin(a) * speed * k;
-        pushParticle(vx, vy, Math.random() < heavyChance);
+        pushParticle(Math.cos(a) * speed * k, Math.sin(a) * speed * k, Math.random() < heavyChance);
       }
     }
   }
 
   // 冲击波与核心光晕
   shockwaves.push(new Shockwave(cx, cy, palette));
-  // 中心少量强光粒子
+  // 中心强光
   for (let i = 0; i < 20; i++) {
     particles.push(new Particle({
       x: cx, y: cy,
@@ -559,57 +544,49 @@ function explodePattern(type, cx, cy, palette) {
   }
 }
 
-// 触发爆炸
 function explodeAt(x, y, palette, forceType) {
   const r = Math.random();
   const type = forceType || (r < 0.18 ? 'ring' : r < 0.38 ? 'chrysanthemum' : r < 0.65 ? 'peony' : r < 0.88 ? 'willow' : 'heart');
   explodePattern(type, x, y, palette || pickPalette());
 }
 
-// 发射火箭
-function launchRocket(x, strength=1, palette) {
+function launchRocket(x, strength=1, palette, forceType) {
   const baseX = x ?? rand(innerWidth * 0.15, innerWidth * 0.85);
   const speed = rand(260, 360) * strength;
   const angle = rand(-Math.PI * 0.06, Math.PI * 0.06);
   const vx = Math.sin(angle) * (speed * 0.22);
   const vy = -Math.cos(angle) * speed;
-  rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette()));
+  rockets.push(new Rocket(baseX, innerHeight + 10, vx, vy, palette || pickPalette(), forceType));
 }
 
-// 点击/触控发射
-window.addEventListener('click', (e) => {
-  if (e.target instanceof HTMLElement && (e.target.id === 'yes' || e.target.id === 'no')) return;
-  launchRocket(e.clientX, 1.0);
-});
-
-// 连续心形庆祝
+/* 仅在点击“愿意”后触发的礼花阵列（多颗爱心+点缀） */
 function celebratoryHearts() {
   const cols = 5;
-  const palette = { hue: 345, sat: 95, lig: 62, glitter: 78 }; // 甜蜜玫红
+  const paletteHeart = { hue: 345, sat: 95, lig: 62, glitter: 78 }; // 甜蜜玫红
   const spacing = innerWidth / (cols + 1);
   let delay = 0;
+
+  // 多列爱心火箭
   for (let i = 1; i <= cols; i++) {
     setTimeout(() => {
       const x = spacing * i;
-      const y = rand(innerHeight * 0.25, innerHeight * 0.4);
-      explodeAt(x, y, palette, 'heart');
+      launchRocket(x, 1.05, paletteHeart, 'heart');
     }, delay);
-    delay += 180;
+    delay += 160;
   }
-  // 再叠加几次随机爱心
-  for (let i = 0; i < 6; i++) {
+
+  // 追加点缀（金色菊花/牡丹）
+  const extras = 6;
+  for (let i = 0; i < extras; i++) {
     setTimeout(() => {
-      explodeAt(rand(innerWidth * 0.2, innerWidth * 0.8), rand(innerHeight * 0.15, innerHeight * 0.5), palette, 'heart');
+      const pal = Math.random() < 0.5 ? { hue: 50, sat: 95, lig: 62, glitter: 70 } : pickPalette();
+      launchRocket(rand(innerWidth * 0.2, innerWidth * 0.8), rand(0.95, 1.15), pal, Math.random() < 0.5 ? 'chrysanthemum' : 'peony');
     }, delay + i * 140);
   }
 }
 
-// 自动烟花调度
-let autoTimer = 0;
-let autoInterval = rand(0.8, 1.6);
+// 动画循环（无自动烟花）
 let windT = 0;
-
-// 动画循环
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.033, (now - last) / 1000); // seconds
@@ -621,23 +598,21 @@ function frame(now) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.fillRect(0, 0, innerWidth, innerHeight);
 
-  // 绘制亮度叠加层
+  // 亮度叠加
   ctx.globalCompositeOperation = 'lighter';
 
-  // 更新并绘制火箭
+  // 更新火箭
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i];
     const alive = r.update(dt, windT);
     r.draw(ctx);
     if (!alive) {
-      // 爆炸
-      explodeAt(r.x, r.y, r.palette);
+      explodeAt(r.x, r.y, r.palette, r.forceType);
       rockets.splice(i, 1);
     }
   }
 
-  // 更新并绘制爆炸粒子
-  // 自适应粒子上限，避免卡顿
+  // 更新粒子
   const targetMax = innerWidth < 600 ? 900 : 1400;
   if (particles.length > targetMax) particles.splice(0, particles.length - targetMax);
 
@@ -655,44 +630,19 @@ function frame(now) {
     }
   }
 
-  // 冲击波（最后绘制以不被覆盖）
+  // 冲击波（最后绘制）
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const s = shockwaves[i];
     if (!s.update(dt)) shockwaves.splice(i, 1);
     else s.draw(ctx);
   }
 
-  // 烟雾（普通合成，不太亮）
-  for (let i = smokes.length - 1; i >= 0; i--) {
-    const s = smokes[i];
-    if (!s.update(dt)) smokes.splice(i, 1);
-    else s.draw(ctx);
-  }
-
-  // 自动发射
-  autoTimer += dt;
-  if (autoTimer > autoInterval) {
-    autoTimer = 0;
-    autoInterval = rand(0.7, 1.5);
-    const group = Math.random() < 0.35 ? 2 : 1;
-    for (let g = 0; g < group; g++) {
-      setTimeout(() => launchRocket(rand(innerWidth * 0.15, innerWidth * 0.85), rand(0.95, 1.2)), g * 120);
-    }
-  }
-
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
-// 首屏点燃几朵
-setTimeout(() => {
-  for (let i = 0; i < 3; i++) {
-    setTimeout(() => launchRocket(rand(innerWidth * 0.2, innerWidth * 0.8), 1.05), i * 180);
-  }
-}, 400);
-
-// 兼容性：避免窗口尺寸变化后坐标偏差
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
+// 不再自动触发烟花，也不响应页面点击，只在“愿意”后触发。
+// window.addEventListener('click', ...) 已移除
 </script>
 </body>
 </html>
