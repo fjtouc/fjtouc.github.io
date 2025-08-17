@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -142,18 +142,18 @@ noBtn.addEventListener("click", () => {
 yesBtn.addEventListener("click", () => {
     yesMusic.currentTime = 0;
     yesMusic.play();
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
         setTimeout(() => {
-            launchFirework();
-        }, i * 600);
+            launchFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.6 + 100);
+        }, i * 400);
     }
 });
 
-// ---------------- 烟花效果 ----------------
+// 烟花效果
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d");
 let particles = [];
-let rockets = [];
+let trails = [];
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -162,100 +162,71 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// 火箭（升空）
-function launchFirework() {
-    const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
-    const y = canvas.height;
-    const targetY = Math.random() * canvas.height * 0.4 + canvas.height * 0.2;
-    const hue = Math.random() * 360;
-    rockets.push({ x, y, targetY, speedY: -(7 + Math.random() * 3), hue });
-}
+// 粒子类
+class Particle {
+    constructor(x, y, color, speed, angle, radius) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.angle = angle;
+        this.radius = radius;
+        this.life = 1;
+        this.decay = Math.random() * 0.015 + 0.01;
+        this.color = color;
+        this.trail = [];
+    }
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + 0.3; // 重力
+        this.speed *= 0.98; // 摩擦
+        this.life -= this.decay;
 
-// 爆炸
-function explode(x, y, hue) {
-    const particleCount = 120 + Math.random() * 60;
-    for (let i = 0; i < particleCount; i++) {
-        const angle = (Math.PI * 2 * i) / particleCount;
-        const speed = Math.random() * 6 + 4;
-        particles.push({
-            x: x,
-            y: y,
-            speedX: Math.cos(angle) * speed,
-            speedY: Math.sin(angle) * speed,
-            radius: Math.random() * 3 + 1.5,
-            alpha: 1,
-            color: `hsl(${hue + Math.random() * 20 - 10}, 100%, 60%)`,
-            trail: []
-        });
+        // 添加拖尾
+        this.trail.push({x: this.x, y: this.y});
+        if (this.trail.length > 10) this.trail.shift();
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        for (let i = this.trail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        }
+        ctx.strokeStyle = this.color;
+        ctx.globalAlpha = this.life;
+        ctx.lineWidth = this.radius / 2;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
     }
 }
 
-// 绘制
+// 创建烟花爆炸
+function launchFirework(x, y) {
+    const hue = Math.random() * 360;
+    const colors = [
+        `hsl(${hue},100%,60%)`,
+        `hsl(${hue+30},100%,55%)`,
+        `hsl(${hue-30},100%,65%)`
+    ];
+    const particleCount = 120 + Math.random() * 60;
+    for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 * i) / particleCount;
+        const speed = Math.random() * 7 + 3;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        particles.push(new Particle(x, y, color, speed, angle, Math.random() * 3 + 2));
+    }
+}
+
+// 绘制循环
 function drawFireworks() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 火箭
-    rockets.forEach((r, ri) => {
-        ctx.beginPath();
-        ctx.fillStyle = `hsl(${r.hue}, 100%, 70%)`;
-        ctx.arc(r.x, r.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        r.y += r.speedY;
-        r.speedY += 0.08; // 模拟阻力+重力
-
-        // 拖尾
-        ctx.beginPath();
-        const gradient = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 20);
-        gradient.addColorStop(0, `hsla(${r.hue}, 100%, 70%, 0.8)`);
-        gradient.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = gradient;
-        ctx.arc(r.x, r.y, 20, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (r.y <= r.targetY) {
-            explode(r.x, r.y, r.hue);
-            rockets.splice(ri, 1);
-        }
-    });
-
-    // 粒子
     particles.forEach((p, i) => {
-        p.trail.push({ x: p.x, y: p.y, alpha: p.alpha });
-        if (p.trail.length > 8) p.trail.shift();
-
-        // 拖尾
-        for (let t = 0; t < p.trail.length; t++) {
-            const point = p.trail[t];
-            ctx.beginPath();
-            ctx.globalAlpha = point.alpha * (t / p.trail.length);
-            ctx.fillStyle = p.color;
-            ctx.arc(point.x, point.y, p.radius * (t / p.trail.length), 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // 光晕
-        ctx.beginPath();
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
-        gradient.addColorStop(0, p.color);
-        gradient.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = gradient;
-        ctx.globalAlpha = p.alpha;
-        ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 物理
-        p.x += p.speedX;
-        p.y += p.speedY;
-        p.speedY += 0.05;
-        p.alpha -= 0.012;
-        if (Math.random() < 0.05) p.alpha *= 0.9;
-
-        if (p.alpha <= 0) particles.splice(i, 1);
+        p.update();
+        p.draw(ctx);
+        if (p.life <= 0) particles.splice(i, 1);
     });
 
-    ctx.globalAlpha = 1;
     requestAnimationFrame(drawFireworks);
 }
 drawFireworks();
